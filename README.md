@@ -1,6 +1,10 @@
 # onpkg ⚡ Online Package & Template Manager for Developers and AI Agents
 
 <p align="center">
+  <img src="assets/logo.png" alt="onpkg Logo" width="320" />
+</p>
+
+<p align="center">
   <b>onpkg</b> · universal online package & template manager
 </p>
 
@@ -89,17 +93,20 @@ onpkg update                      # check for updates
 
 ---
 
-## Built-in Premium Stacks
+## Built-in Premium Stacks (10 Stacks Available)
 
 | Stack | Runtime | Description / Packages | Files |
 |---|---|---|---|
+| **`react-vite`** | bun | React 19 + Vite 8 + Tailwind 4 + Lucide Icons + CSS Modules / Vanilla CSS | 35 files |
+| **`react-vite-full`** | bun | React 19 + Vite 8 + Tailwind 4 + React Router v7 + State (Zustand/Redux) + Framer Motion | 40 files |
 | **`react-vite-gsap`** | bun | React 19 + Vite 8 + Tailwind 4 + GSAP + Framer Motion + Lenis + shadcn/ui + Lordicon | 42 files |
 | **`next-template`** | bun | Upgraded Next.js 16 + Bun + Tailwind CSS v4 + Prisma 7 + Professional Backend | 61 files |
-| **`fastapi`** | uv | FastAPI + SQLAlchemy (Async) + Alembic + Pydantic v2 + structlog | 25 files |
-| **`flutter-riverpod-my_app`** | flutter | Flutter + Riverpod/Hooks + GoRouter + Dio + Material 3 + Logger + Google Fonts | 30 files |
+| **`hono-api`** | bun | Hono API starter - ultra lightweight TS backend with routing and JSON support | 5 files |
 | **`hono-full`** | bun | Hono + Prisma + Zod + Pino + Better Auth (Prisma Adapter) | 8 files |
 | **`mern`** | bun | MERN Stack - Express + React + MongoDB + TypeScript (Monorepo) | 13 files |
 | **`pern`** | bun | PERN Stack - Express + React + PostgreSQL + Prisma + TypeScript (Monorepo) | 11 files |
+| **`fastapi`** | uv | FastAPI + SQLAlchemy (Async) + Alembic + Pydantic v2 + structlog | 25 files |
+| **`flutter-riverpod-my_app`** | flutter | Flutter + Riverpod/Hooks + GoRouter + Dio + Material 3 + Logger + Google Fonts | 30 files |
 
 ---
 
