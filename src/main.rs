@@ -614,6 +614,13 @@ async fn main() -> Result<()> {
                 } else {
                     TUI::success("AI agent skills created under onpkg_docs/", None);
                     TUI::info("Agents can read onpkg_docs/INDEX.md to get started.");
+                    
+                    // Generate AI Agent Manifest onpkg.json
+                    if let Err(e) = templates::generate_onpkg_manifest(&tmpl, &target, &techs) {
+                        TUI::warn(&format!("Failed to generate onpkg.json: {}", e));
+                    } else {
+                        TUI::success("AI agent manifest created in onpkg.json", None);
+                    }
                 }
             }
 

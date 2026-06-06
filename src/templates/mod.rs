@@ -601,3 +601,193 @@ This is a generated AI agent skill document for `{name}`.
 
     Ok(())
 }
+
+/// Generate the onpkg.json AI Agent project manifest in the project root
+pub fn generate_onpkg_manifest(
+    tmpl: &TemplateDefinition,
+    target_dir: &std::path::Path,
+    technologies: &[String],
+) -> Result<()> {
+    // 1. Detect project name
+    let project_name = target_dir
+        .file_name()
+        .and_then(|n| n.to_str())
+        .unwrap_or("my-project")
+        .to_string();
+
+    // 2. Detect runtime and package manager
+    let mut runtime = "node".to_string();
+    let mut package_manager = "npm".to_string();
+    
+    // Check files to determine runtime/package manager
+    if target_dir.join("package.json").exists() {
+        runtime = "node".to_string();
+        package_manager = "npm".to_string();
+        if tmpl.name.contains("react") || tmpl.name.contains("next") || tmpl.name.contains("hono") || tmpl.name.contains("mern") || tmpl.name.contains("pern") {
+            runtime = "bun".to_string();
+            package_manager = "bun".to_string();
+        }
+    } else if target_dir.join("pyproject.toml").exists() || target_dir.join("requirements.txt").exists() {
+        runtime = "python".to_string();
+        package_manager = "uv".to_string();
+    } else if target_dir.join("pubspec.yaml").exists() {
+        runtime = "flutter".to_string();
+        package_manager = "flutter".to_string();
+    } else if target_dir.join("Cargo.toml").exists() {
+        runtime = "rust".to_string();
+        package_manager = "cargo".to_string();
+    }
+
+    // 3. Locate entrypoint and routing directories
+    let mut architecture = std::collections::BTreeMap::new();
+    let entrypoints = [
+        "src/main.tsx",
+        "src/main.ts",
+        "src/index.js",
+        "src/main.rs",
+        "lib/main.dart",
+        "app/main.py",
+        "src/main.py",
+        "main.py",
+    ];
+    for ep in &entrypoints {
+        if target_dir.join(ep).exists() {
+            architecture.insert("entrypoint".to_string(), ep.to_string());
+            break;
+        }
+    }
+
+    let dirs = [
+        ("routing", vec!["src/routes", "src/pages", "app/"]),
+        ("components", vec!["src/components", "components/"]),
+        ("styles", vec!["src/index.css", "src/App.css", "src/styles.css", "styles/"]),
+        ("database", vec!["prisma/schema.prisma", "src/db", "db/"]),
+    ];
+
+    for (key, paths) in &dirs {
+        for path in paths {
+            if target_dir.join(path).exists() {
+                architecture.insert(key.to_string(), path.to_string());
+                break;
+            }
+        }
+    }
+
+    // 4. Collect scripts and packages
+    let mut scripts = std::collections::BTreeMap::new();
+    let mut core_packages = Vec::new();
+
+    // Parse package.json if it exists
+    let pkg_json_path = target_dir.join("package.json");
+    if pkg_json_path.exists() {
+        if let Ok(content) = fs::read_to_string(&pkg_json_path) {
+            if let Ok(v) = serde_json::from_str::<serde_json::Value>(&content) {
+                if let Some(s) = v.get("scripts").and_then(|s| s.as_object()) {
+                    for (k, val) in s {
+                        if let Some(val_str) = val.as_str() {
+                            scripts.insert(k.clone(), val_str.to_string());
+                        }
+                    }
+                }
+                if let Some(deps) = v.get("dependencies").and_then(|d| d.as_object()) {
+                    for (k, _) in deps {
+                        core_packages.push(k.clone());
+                    }
+                }
+            }
+        }
+    }
+
+    // Parse Cargo.toml if it exists
+    let cargo_toml_path = target_dir.join("Cargo.toml");
+    if cargo_toml_path.exists() {
+        if let Ok(content) = fs::read_to_string(&cargo_toml_path) {
+            if let Ok(v) = toml::from_str::<toml::Value>(&content) {
+                if let Some(deps) = v.get("dependencies").and_then(|d| d.as_table()) {
+                    for (k, _) in deps {
+                        core_packages.push(k.clone());
+                    }
+                }
+            }
+        }
+        scripts.insert("dev".to_string(), "cargo run".to_string());
+        scripts.insert("build".to_string(), "cargo build".to_string());
+        scripts.insert("test".to_string(), "cargo test".to_string());
+    }
+
+    // Parse pyproject.toml if it exists
+    let pyproject_toml_path = target_dir.join("pyproject.toml");
+    if pyproject_toml_path.exists() {
+        if let Ok(content) = fs::read_to_string(&pyproject_toml_path) {
+            if let Ok(v) = toml::from_str::<toml::Value>(&content) {
+                if let Some(project) = v.get("project") {
+                    if let Some(deps) = project.get("dependencies").and_then(|d| d.as_array()) {
+                        for dep in deps {
+                            if let Some(dep_str) = dep.as_str() {
+                                let name = dep_str.split(&['>', '=', '<', '~', '!'][..]).next().unwrap_or(dep_str).trim();
+                                core_packages.push(name.to_string());
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        scripts.insert("dev".to_string(), "uvicorn app.main:app --reload".to_string());
+    }
+
+    // Default scripts if empty
+    if scripts.is_empty() {
+        if runtime == "flutter" {
+            scripts.insert("dev".to_string(), "flutter run".to_string());
+            scripts.insert("build".to_string(), "flutter build apk".to_string());
+        } else {
+            scripts.insert("dev".to_string(), "npm run dev".to_string());
+            scripts.insert("build".to_string(), "npm run build".to_string());
+        }
+    }
+
+    // 5. Collect active skills
+    let mut active_skills = Vec::new();
+    for tech in technologies {
+        let tech_filename = format!("{}.md", tech);
+        if target_dir.join("onpkg_docs").join(&tech_filename).exists() {
+            active_skills.push(tech_filename);
+        }
+    }
+
+    // 6. Build the manifest JSON structure
+    let mut manifest = std::collections::BTreeMap::new();
+    
+    let mut project_info = std::collections::BTreeMap::new();
+    project_info.insert("name".to_string(), serde_json::Value::String(project_name));
+    project_info.insert("stack".to_string(), serde_json::Value::String(tmpl.name.clone()));
+    project_info.insert("runtime".to_string(), serde_json::Value::String(runtime));
+    project_info.insert("package_manager".to_string(), serde_json::Value::String(package_manager));
+    manifest.insert("project".to_string(), serde_json::Value::Object(project_info.into_iter().collect()));
+
+    let arch_info: serde_json::Map<String, serde_json::Value> = architecture.into_iter().map(|(k, v)| (k, serde_json::Value::String(v))).collect();
+    manifest.insert("architecture".to_string(), serde_json::Value::Object(arch_info));
+
+    let mut agent_info = std::collections::BTreeMap::new();
+    agent_info.insert("docs_directory".to_string(), serde_json::Value::String("onpkg_docs/".to_string()));
+    agent_info.insert("active_skills".to_string(), serde_json::Value::Array(active_skills.into_iter().map(serde_json::Value::String).collect()));
+    manifest.insert("agent_instructions".to_string(), serde_json::Value::Object(agent_info.into_iter().collect()));
+
+    let scripts_info: serde_json::Map<String, serde_json::Value> = scripts.into_iter().map(|(k, v)| (k, serde_json::Value::String(v))).collect();
+    manifest.insert("scripts".to_string(), serde_json::Value::Object(scripts_info));
+
+    let mut packages_info = std::collections::BTreeMap::new();
+    packages_info.insert("core".to_string(), serde_json::Value::Array(core_packages.into_iter().map(serde_json::Value::String).collect()));
+    packages_info.insert("added_by_agent".to_string(), serde_json::Value::Array(vec![]));
+    manifest.insert("packages".to_string(), serde_json::Value::Object(packages_info.into_iter().collect()));
+
+    // 7. Write to target_dir/onpkg.json
+    let manifest_path = target_dir.join("onpkg.json");
+    if let Ok(json_str) = serde_json::to_string_pretty(&manifest) {
+        fs::write(&manifest_path, json_str)?;
+        println!("  created: AI Agent Project Manifest in onpkg.json");
+    }
+
+    Ok(())
+}
+
