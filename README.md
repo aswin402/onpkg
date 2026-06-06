@@ -14,6 +14,10 @@
   <img src="https://img.shields.io/badge/license-MIT-blue" alt="License"/>
 </p>
 
+<p align="center">
+  ✨ <b>Vibe coded by Aswin</b> ✨
+</p>
+
 **onpkg** is a high-performance, online-first package and template manager engineered in Rust for developers and AI agents. It scaffolds full premium project architectures instantly, automatically installs dependencies online using the best runtime package manager (`bun`, `npm`, `pnpm`, `yarn`, `uv`, `pip`, `flutter`, or `cargo`), and generates `onpkg_docs/` containing AI agent skills for the project.
 
 ---
