@@ -1,7 +1,7 @@
 # onpkg ⚡ Online Package & Template Manager for Developers and AI Agents
 
 <p align="center">
-  <img src="assets/logo.png" alt="onpkg Logo" width="320" />
+  <img src="assets/logo.svg" alt="onpkg Logo" width="320" />
 </p>
 
 <p align="center">
