@@ -1,0 +1,62 @@
+[package]
+name = "onpkg"
+version = "0.1.0"
+edition = "2021"
+description = "Online Package & Template Manager — scaffold projects, manage skills, cache packages"
+authors = ["Aswin"]
+license = "MIT"
+
+[[bin]]
+name = "onpkg"
+path = "src/main.rs"
+
+[dependencies]
+# CLI
+clap = { version = "4.5", features = ["derive"] }
+
+# Async runtime
+tokio = { version = "1.40", features = ["full"] }
+
+# HTTP client
+reqwest = { version = "0.12", default-features = false, features = ["json", "rustls-tls"] }
+
+# Serialization
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+toml = "0.8"
+
+# Database
+rusqlite = { version = "0.32", features = ["bundled"] }
+
+# Error handling
+anyhow = "1.0"
+
+# Progress & terminal UI
+indicatif = "0.18"
+
+# Template engine (Jinja2-compatible, lightweight)
+minijinja = "2.20"
+
+# Git operations
+git2 = "0.21"
+
+# File system utilities
+walkdir = "2"
+glob = "0.3"
+
+# Datetime
+chrono = { version = "0.4", features = ["serde"] }
+
+# Version comparison
+semver = "1.0"
+
+# Logging
+tracing = "0.1"
+tracing-subscriber = "0.3"
+
+# Terminal colors
+colored = "3"
+
+[profile.release]
+opt-level = 3
+strip = true
