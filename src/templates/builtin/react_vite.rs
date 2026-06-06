@@ -1234,7 +1234,7 @@ export function NotFoundPage() {
                 content: r###"import { useState } from 'react';
 import reactLogo from '../assets/react.svg';
 import viteLogo from '../assets/vite.svg';
-import heroImg from '../assets/hero.png';
+import heroImg from '../assets/logo.svg';
 import { Zap, ShieldCheck, Package } from 'lucide-react';
 
 export function HomePage() {
@@ -2703,7 +2703,7 @@ export function NotFoundPage() {
                 content: r###"import { useState } from 'react';
 import reactLogo from '../assets/react.svg';
 import viteLogo from '../assets/vite.svg';
-import heroImg from '../assets/hero.png';
+import heroImg from '../assets/logo.svg';
 import { Zap, ShieldCheck, Package } from 'lucide-react';
 
 export function HomePage() {

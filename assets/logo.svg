@@ -162,14 +162,7 @@
     }
   </style>
 
-  <!-- Background -->
-  <rect width="100%" height="100%" class="bg" />
 
-  <!-- Grid Decoration (Subtle) -->
-  <g opacity="0.03">
-    <path d="M 0,100 L 800,100 M 0,200 L 800,200 M 0,300 L 800,300 M 0,400 L 800,400 M 0,500 L 800,500 M 0,600 L 800,600 M 0,700 L 800,700" stroke="#fff" stroke-width="1" />
-    <path d="M 100,0 L 100,800 M 200,0 L 200,800 M 300,0 L 300,800 M 400,0 L 400,800 M 500,0 L 500,800 M 600,0 L 600,800 M 700,0 L 700,800" stroke="#fff" stroke-width="1" />
-  </g>
 
   <g transform="translate(400, 360)">
     <!-- Circuit Lines (Emerging from the Box) -->

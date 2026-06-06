@@ -1272,7 +1272,30 @@ class HomePage extends HookConsumerWidget {
                 )
               ],
             ),
-            child: const FlutterLogo(size: 70),
+            child: Container(
+              width: 70,
+              height: 70,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                gradient: const LinearGradient(
+                  colors: [Color(0xFF00F3FF), Color(0xFFAB00FF), Color(0xFFFF00CC)],
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                ),
+                boxShadow: [
+                  BoxShadow(
+                    color: const Color(0xFFAB00FF).withOpacity(0.4),
+                    blurRadius: 15,
+                    spreadRadius: 2,
+                  ),
+                ],
+              ),
+              child: const Icon(
+                Icons.unarchive_rounded,
+                color: Colors.white,
+                size: 38,
+              ),
+            ),
           ),
           Positioned(
             top: -2,
