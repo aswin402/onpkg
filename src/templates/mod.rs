@@ -57,7 +57,7 @@ impl TemplateDefinition {
 impl From<crate::stacks::Stack> for TemplateDefinition {
     fn from(stack: crate::stacks::Stack) -> Self {
         let files = stack.files.into_iter()
-            .filter(|f| !f.path.starts_with("offpkg_docs/"))
+            .filter(|f| !f.path.starts_with("onpkg_docs/"))
             .map(|f| TemplateFile {
                 path: f.path,
                 content: f.content,
@@ -153,7 +153,7 @@ impl TemplateEngine {
     pub fn all_templates(&self) -> Vec<TemplateDefinition> {
         let mut templates = Vec::new();
 
-        // Load premium stacks from offpkg
+        // Load premium stacks from onpkg
         for stack in crate::stacks::builtin::builtin_stacks() {
             templates.push(TemplateDefinition::from(stack));
         }

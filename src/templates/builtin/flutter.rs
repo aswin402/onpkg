@@ -11,7 +11,7 @@ pub fn flutter_riverpod(app_name: Option<&str>) -> Stack {
             }
             t
         })
-        .unwrap_or_else(|| "Offpkg_flutter-riverpod".to_string());
+        .unwrap_or_else(|| "Onpkg_flutter-riverpod".to_string());
 
     Stack {
         name: if name.is_empty() { "flutter-riverpod".into() } else { format!("flutter-riverpod-{}", name).into() },
@@ -29,10 +29,10 @@ pub fn flutter_riverpod(app_name: Option<&str>) -> Stack {
         transitive_packages: vec![],
         files: vec![
             StackFile {
-                path: "OFFPKG_README.md".into(),
-                content: r##"# Offpkg Flutter App
+                path: "ONPKG_README.md".into(),
+                content: r##"# Onpkg Flutter App
 
-A modern, scalable Flutter application serving as the client for Offpkg.
+A modern, scalable Flutter application serving as the client for Onpkg.
 
 ## Key Technologies
 
@@ -1338,7 +1338,7 @@ class HomePage extends HookConsumerWidget {
     return Column(
       children: [
         Text(
-          "Get started Offpkg\nFlutter + Hooks",
+          "Get started Onpkg\nFlutter + Hooks",
           textAlign: TextAlign.center,
           style: context.textTheme.headlineLarge
         ),
@@ -1459,7 +1459,7 @@ class _FeatureCard extends StatelessWidget {
                 binary_content: None,
             },
             StackFile {
-                path: "lib/offpkg_main.dart".into(),
+                path: "lib/onpkg_main.dart".into(),
                 content: format!(
                     r##"import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -1638,7 +1638,7 @@ class AppTopNavbar extends ConsumerWidget implements PreferredSizeWidget {
               ),
               const SizedBox(width: 12),
               Text(
-                'Offpkg',
+                'Onpkg',
                 style: context.textTheme.titleLarge
               ),
               const Spacer(),
