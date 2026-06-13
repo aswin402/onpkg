@@ -40,3 +40,11 @@ To add or modify subcommands, edit [src/cli.rs](file:///home/aswin/programming/v
 To tune the AI skill or template generation behavior, modify the prompts in [src/ai.rs](file:///home/aswin/programming/vscode/myProjects/ai_agent_tools/onpkg/src/ai.rs):
 - `generate_skill` handles tech-skill instruction prompt tuning.
 - `generate_template` handles TOML stack structure generation prompt tuning.
+
+## Manifest Synchronization
+
+If your codebase modifications add or move source files/folders or package dependencies, run:
+```bash
+onpkg sync
+```
+This automatically updates `onpkg.json` and ensures `onpkg_docs/` is aligned.

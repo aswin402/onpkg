@@ -30,3 +30,8 @@ Checks the health of the local setup:
 - Configuration file availability.
 - Available stacks and installed skills count.
 - PATH verification for Node.js, Bun, Python 3, and Cargo with their active versions.
+
+## 6. Spec-Driven AI Workflows & Project Syncing (`onpkg sync`)
+Maintains alignment between the repository codebase, dependencies, and AI assistant specifications:
+- **`onpkg sync`**: Scans the project recursively to build a complete `sources` index (directories, files, and extension patterns) and update the project architecture layout (`entrypoint`, `routing`, `components`, `styles`, `database`, `tests`) in `onpkg.json`.
+- **AI Agent Specifications**: Scaffolds living requirements, design system templates, engineering plans, page layouts, and checklists (`prd.md`, `content.md`, `design.md`, `implementation.md`, `todo.md`) under `onpkg_docs/` to organize requirements and facilitate SDD (Spec-Driven Development) across agents like `openz`.

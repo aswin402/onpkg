@@ -5,7 +5,7 @@ use clap::{Parser, Subcommand};
     name = "onpkg",
     version = "0.1.0",
     about = "Online Package & Template Manager — scaffold projects, manage skills, cache packages",
-    long_about = "onpkg is an online package and template manager for developers and AI agents.\n\nCommands:\n  template    Scaffold projects from prebuilt templates\n  skill       Install and manage AI agent skills\n  pkg         Install and manage packages\n  registry    Interact with the online registry\n  init        Initialize a new project\n  doctor      Run diagnostics\n  update      Update onpkg itself",
+    long_about = "onpkg is an online package and template manager for developers and AI agents.\n\nCommands:\n  template    Scaffold projects from prebuilt templates\n  skill       Install and manage AI agent skills\n  pkg         Install and manage packages\n  registry    Interact with the online registry\n  init        Initialize a new project\n  sync        Sync project files and packages to manifest & docs\n  doctor      Run diagnostics\n  update      Update onpkg itself",
     disable_version_flag = true
 )]
 pub struct Args {
@@ -58,6 +58,13 @@ pub enum Command {
 
     /// Update onpkg itself to the latest version
     Update,
+
+    /// Sync project files, folders, and packages to onpkg.json and update workflow documents
+    Sync {
+        /// Project directory (defaults to current directory)
+        #[arg(short, long)]
+        dir: Option<String>,
+    },
 
     /// Stack commands — scaffold and install complete stacks online
     Stack {

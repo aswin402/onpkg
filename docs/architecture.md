@@ -29,10 +29,10 @@ This document describes the high-level architecture, module flow, and schema lay
 | Module | Location | Purpose |
 |---|---|---|
 | `main` | `src/main.rs` | CLI entrypoint, matches commands, coordinates scaffolding and installations. |
-| `cli` | `src/cli.rs` | Command line argument parsing using `clap` (handles `stack`, `ai`, `skill`, etc.). |
+| `cli` | `src/cli.rs` | Command line argument parsing using `clap` (handles `stack`, `ai`, `skill`, `sync`, etc.). |
 | `config` | `src/config.rs` | Reads, validates, and writes global settings in `~/.onpkg/config.toml`. |
 | `db` | `src/db.rs` | SQLite database manager, saves catalog records for packages, skills, and templates. |
-| `templates` | `src/templates/mod.rs` | Scaffolds files, runs online package installers, and populates project `onpkg_docs/`. |
+| `templates` | `src/templates/mod.rs` | Scaffolds files, runs online package installers, dynamically scans project directories, generates/updates onpkg.json, and populates project `onpkg_docs/`. |
 | `stacks` | `src/stacks.rs` | Loads and matches premium templates and submodules under `src/templates/builtin/`. |
 | `ai` | `src/ai.rs` | Handles communication with Gemini API (`gemini-2.5-flash`) for AI generation. |
 | `skill` | `src/skill.rs` | Manages AI agent instructions (skills) in `~/.onpkg/skills/`. |

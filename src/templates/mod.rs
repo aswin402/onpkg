@@ -619,6 +619,15 @@ pub fn generate_onpkg_manifest(
     target_dir: &std::path::Path,
     technologies: &[String],
 ) -> Result<()> {
+    sync_onpkg_project(target_dir, Some(&tmpl.name), Some(technologies))
+}
+
+/// Sync the project files and packages to onpkg.json and update/create workflow docs in onpkg_docs/
+pub fn sync_onpkg_project(
+    target_dir: &std::path::Path,
+    stack_name: Option<&str>,
+    technologies: Option<&[String]>,
+) -> Result<()> {
     // 1. Detect project name
     let project_name = target_dir
         .file_name()
@@ -626,17 +635,43 @@ pub fn generate_onpkg_manifest(
         .unwrap_or("my-project")
         .to_string();
 
-    // 2. Detect runtime and package manager
+    // 2. Load existing manifest if present
+    let onpkg_path = target_dir.join("onpkg.json");
+    let mut existing_manifest: Option<serde_json::Value> = None;
+    if onpkg_path.exists() {
+        if let Ok(content) = fs::read_to_string(&onpkg_path) {
+            existing_manifest = serde_json::from_str(&content).ok();
+        }
+    }
+
+    // 3. Detect runtime and package manager
     let mut runtime = "node".to_string();
     let mut package_manager = "npm".to_string();
     
-    // Check files to determine runtime/package manager
-    if target_dir.join("package.json").exists() {
+    // Lock/manifest detection
+    if target_dir.join("bun.lockb").exists() || target_dir.join("bun.lock").exists() {
+        runtime = "bun".to_string();
+        package_manager = "bun".to_string();
+    } else if target_dir.join("package-lock.json").exists() {
         runtime = "node".to_string();
         package_manager = "npm".to_string();
-        if tmpl.name.contains("react") || tmpl.name.contains("next") || tmpl.name.contains("hono") || tmpl.name.contains("mern") || tmpl.name.contains("pern") {
-            runtime = "bun".to_string();
-            package_manager = "bun".to_string();
+    } else if target_dir.join("pnpm-lock.yaml").exists() {
+        runtime = "node".to_string();
+        package_manager = "pnpm".to_string();
+    } else if target_dir.join("yarn.lock").exists() {
+        runtime = "node".to_string();
+        package_manager = "yarn".to_string();
+    } else if target_dir.join("package.json").exists() {
+        // Fallback checks
+        runtime = "node".to_string();
+        package_manager = "npm".to_string();
+        if let Some(ref m) = existing_manifest {
+            if let Some(pm) = m.get("project").and_then(|p| p.get("package_manager")).and_then(|p| p.as_str()) {
+                package_manager = pm.to_string();
+            }
+            if let Some(rt) = m.get("project").and_then(|p| p.get("runtime")).and_then(|p| p.as_str()) {
+                runtime = rt.to_string();
+            }
         }
     } else if target_dir.join("pyproject.toml").exists() || target_dir.join("requirements.txt").exists() {
         runtime = "python".to_string();
@@ -649,42 +684,142 @@ pub fn generate_onpkg_manifest(
         package_manager = "cargo".to_string();
     }
 
-    // 3. Locate entrypoint and routing directories
-    let mut architecture = std::collections::BTreeMap::new();
-    let entrypoints = [
-        "src/main.tsx",
-        "src/main.ts",
-        "src/index.js",
-        "src/main.rs",
-        "lib/main.dart",
-        "app/main.py",
-        "src/main.py",
-        "main.py",
+    // 4. Scan the project recursively to build the sources block
+    let mut files = Vec::new();
+    let mut dirs = std::collections::BTreeSet::new();
+    let mut extensions = std::collections::BTreeSet::new();
+
+    let allowed_exts = [
+        "rs", "ts", "tsx", "js", "jsx", "py", "dart", "html", "css", "prisma", "sql", "toml", "json", "yaml", "yml", "md"
     ];
-    for ep in &entrypoints {
+
+    let walker = WalkDir::new(target_dir)
+        .into_iter()
+        .filter_entry(|e| {
+            let file_name = e.file_name().to_string_lossy();
+            let relative_path = e.path().strip_prefix(target_dir).unwrap_or(e.path());
+            let rel_str = relative_path.to_string_lossy();
+            
+            if e.file_type().is_dir() {
+                let name = file_name.as_ref();
+                name != ".git" &&
+                name != ".crush" &&
+                name != "node_modules" &&
+                name != "target" &&
+                name != "build" &&
+                name != "dist" &&
+                name != ".next" &&
+                name != ".svelte-kit" &&
+                name != "venv" &&
+                name != ".venv" &&
+                name != "__pycache__" &&
+                name != ".dart_tool" &&
+                name != "ios" &&
+                name != "android" &&
+                name != "onpkg_docs"
+            } else {
+                let name = file_name.as_ref();
+                name != "onpkg.json" && !rel_str.contains("onpkg_docs/")
+            }
+        });
+
+    for entry in walker.filter_map(|e| e.ok()) {
+        let path = entry.path();
+        if path.is_file() {
+            if let Some(ext) = path.extension().and_then(|s| s.to_str()) {
+                if allowed_exts.contains(&ext) {
+                    let rel_path = path.strip_prefix(target_dir).unwrap_or(path);
+                    let rel_str = rel_path.to_string_lossy().to_string();
+                    files.push(rel_str);
+                    extensions.insert(ext.to_string());
+                    if let Some(parent) = rel_path.parent() {
+                        let parent_str = parent.to_string_lossy().to_string();
+                        if !parent_str.is_empty() {
+                            dirs.insert(parent_str);
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    let mut file_patterns: Vec<String> = extensions.into_iter().map(|ext| format!("*.{}", ext)).collect();
+    file_patterns.sort();
+    let mut directories: Vec<String> = dirs.into_iter().collect();
+    directories.sort();
+    files.sort();
+
+    // 5. Detect architecture components
+    let mut architecture = std::collections::BTreeMap::new();
+    
+    // Entrypoints
+    let entrypoint_patterns = [
+        "src/main.rs", "src/main.tsx", "src/main.ts", "src/index.js", "src/index.tsx", "src/index.ts",
+        "lib/main.dart", "app/main.py", "src/main.py", "main.py"
+    ];
+    for ep in &entrypoint_patterns {
         if target_dir.join(ep).exists() {
             architecture.insert("entrypoint".to_string(), ep.to_string());
             break;
         }
     }
-
-    let dirs = [
-        ("routing", vec!["src/routes", "src/pages", "app/"]),
-        ("components", vec!["src/components", "components/"]),
-        ("styles", vec!["src/index.css", "src/App.css", "src/styles.css", "styles/"]),
-        ("database", vec!["prisma/schema.prisma", "src/db", "db/"]),
+    
+    // Routing directories
+    let routing_patterns = [
+        "src/routes", "src/pages", "app/routes", "app", "src/app", "routes", "pages"
     ];
-
-    for (key, paths) in &dirs {
-        for path in paths {
-            if target_dir.join(path).exists() {
-                architecture.insert(key.to_string(), path.to_string());
-                break;
-            }
+    for r in &routing_patterns {
+        if target_dir.join(r).exists() {
+            architecture.insert("routing".to_string(), r.to_string());
+            break;
         }
     }
 
-    // 4. Collect scripts and packages
+    // Components
+    let components_patterns = [
+        "src/components", "components", "src/ui", "src/components/ui", "ui"
+    ];
+    for c in &components_patterns {
+        if target_dir.join(c).exists() {
+            architecture.insert("components".to_string(), c.to_string());
+            break;
+        }
+    }
+
+    // Styles
+    let styles_patterns = [
+        "src/index.css", "src/App.css", "src/styles.css", "styles", "src/global.css", "src/styles/global.css"
+    ];
+    for s in &styles_patterns {
+        if target_dir.join(s).exists() {
+            architecture.insert("styles".to_string(), s.to_string());
+            break;
+        }
+    }
+
+    // Database
+    let db_patterns = [
+        "prisma/schema.prisma", "src/db", "db", "schema.sql", "migrations", "src/database"
+    ];
+    for d in &db_patterns {
+        if target_dir.join(d).exists() {
+            architecture.insert("database".to_string(), d.to_string());
+            break;
+        }
+    }
+
+    // Tests
+    let tests_patterns = [
+        "src/tests", "tests", "test", "src/test"
+    ];
+    for t in &tests_patterns {
+        if target_dir.join(t).exists() {
+            architecture.insert("tests".to_string(), t.to_string());
+            break;
+        }
+    }
+
+    // 6. Collect scripts and packages
     let mut scripts = std::collections::BTreeMap::new();
     let mut core_packages = Vec::new();
 
@@ -705,6 +840,11 @@ pub fn generate_onpkg_manifest(
                         core_packages.push(k.clone());
                     }
                 }
+                if let Some(dev_deps) = v.get("devDependencies").and_then(|d| d.as_object()) {
+                    for (k, _) in dev_deps {
+                        core_packages.push(k.clone());
+                    }
+                }
             }
         }
     }
@@ -716,6 +856,11 @@ pub fn generate_onpkg_manifest(
             if let Ok(v) = toml::from_str::<toml::Value>(&content) {
                 if let Some(deps) = v.get("dependencies").and_then(|d| d.as_table()) {
                     for (k, _) in deps {
+                        core_packages.push(k.clone());
+                    }
+                }
+                if let Some(dev_deps) = v.get("dev-dependencies").and_then(|d| d.as_table()) {
+                    for (k, _) in dev_deps {
                         core_packages.push(k.clone());
                     }
                 }
@@ -757,21 +902,76 @@ pub fn generate_onpkg_manifest(
         }
     }
 
-    // 5. Collect active skills
+    // 7. Collect active skills from onpkg_docs/
+    let docs_dir = target_dir.join("onpkg_docs");
     let mut active_skills = Vec::new();
-    for tech in technologies {
-        let tech_filename = format!("{}.md", tech);
-        if target_dir.join("onpkg_docs").join(&tech_filename).exists() {
-            active_skills.push(tech_filename);
+    
+    // If technologies were supplied during creation, make sure we pre-populate skills list
+    if let Some(techs) = technologies {
+        for tech in techs {
+            active_skills.push(format!("{}.md", tech));
+        }
+    }
+    
+    if docs_dir.exists() {
+        if let Ok(entries) = fs::read_dir(&docs_dir) {
+            for entry in entries.filter_map(|e| e.ok()) {
+                let path = entry.path();
+                if path.is_file() {
+                    if let Some(ext) = path.extension().and_then(|s| s.to_str()) {
+                        if ext == "md" {
+                            if let Some(name) = path.file_name().and_then(|s| s.to_str()) {
+                                // Exclude INDEX and workflow files
+                                if name != "INDEX.md"
+                                    && name != "prd.md"
+                                    && name != "content.md"
+                                    && name != "design.md"
+                                    && name != "implementation.md"
+                                    && name != "todo.md"
+                                {
+                                    active_skills.push(name.to_string());
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+    active_skills.sort();
+    active_skills.dedup();
+
+    // Preserve stack name
+    let final_stack = if let Some(sn) = stack_name {
+        sn.to_string()
+    } else if let Some(ref m) = existing_manifest {
+        m.get("project")
+            .and_then(|p| p.get("stack"))
+            .and_then(|s| s.as_str())
+            .unwrap_or("custom")
+            .to_string()
+    } else {
+        "custom".to_string()
+    };
+
+    // Preserve added_by_agent packages
+    let mut added_by_agent = Vec::new();
+    if let Some(ref m) = existing_manifest {
+        if let Some(arr) = m.get("packages").and_then(|p| p.get("added_by_agent")).and_then(|a| a.as_array()) {
+            for v in arr {
+                if let Some(s) = v.as_str() {
+                    added_by_agent.push(s.to_string());
+                }
+            }
         }
     }
 
-    // 6. Build the manifest JSON structure
+    // Build the manifest JSON
     let mut manifest = std::collections::BTreeMap::new();
     
     let mut project_info = std::collections::BTreeMap::new();
     project_info.insert("name".to_string(), serde_json::Value::String(project_name));
-    project_info.insert("stack".to_string(), serde_json::Value::String(tmpl.name.clone()));
+    project_info.insert("stack".to_string(), serde_json::Value::String(final_stack));
     project_info.insert("runtime".to_string(), serde_json::Value::String(runtime));
     project_info.insert("package_manager".to_string(), serde_json::Value::String(package_manager));
     manifest.insert("project".to_string(), serde_json::Value::Object(project_info.into_iter().collect()));
@@ -781,23 +981,181 @@ pub fn generate_onpkg_manifest(
 
     let mut agent_info = std::collections::BTreeMap::new();
     agent_info.insert("docs_directory".to_string(), serde_json::Value::String("onpkg_docs/".to_string()));
-    agent_info.insert("active_skills".to_string(), serde_json::Value::Array(active_skills.into_iter().map(serde_json::Value::String).collect()));
+    agent_info.insert("active_skills".to_string(), serde_json::Value::Array(active_skills.iter().map(|s| serde_json::Value::String(s.clone())).collect()));
     manifest.insert("agent_instructions".to_string(), serde_json::Value::Object(agent_info.into_iter().collect()));
 
     let scripts_info: serde_json::Map<String, serde_json::Value> = scripts.into_iter().map(|(k, v)| (k, serde_json::Value::String(v))).collect();
     manifest.insert("scripts".to_string(), serde_json::Value::Object(scripts_info));
 
     let mut packages_info = std::collections::BTreeMap::new();
+    core_packages.sort();
+    core_packages.dedup();
     packages_info.insert("core".to_string(), serde_json::Value::Array(core_packages.into_iter().map(serde_json::Value::String).collect()));
-    packages_info.insert("added_by_agent".to_string(), serde_json::Value::Array(vec![]));
+    packages_info.insert("added_by_agent".to_string(), serde_json::Value::Array(added_by_agent.into_iter().map(serde_json::Value::String).collect()));
     manifest.insert("packages".to_string(), serde_json::Value::Object(packages_info.into_iter().collect()));
 
-    // 7. Write to target_dir/onpkg.json
-    let manifest_path = target_dir.join("onpkg.json");
+    // Add sources block for tree-sitter & code analysis!
+    let mut sources_info = std::collections::BTreeMap::new();
+    sources_info.insert("directories".to_string(), serde_json::Value::Array(directories.into_iter().map(serde_json::Value::String).collect()));
+    sources_info.insert("files".to_string(), serde_json::Value::Array(files.into_iter().map(serde_json::Value::String).collect()));
+    sources_info.insert("file_patterns".to_string(), serde_json::Value::Array(file_patterns.into_iter().map(serde_json::Value::String).collect()));
+    manifest.insert("sources".to_string(), serde_json::Value::Object(sources_info.into_iter().collect()));
+
+    // Write to target_dir/onpkg.json
     if let Ok(json_str) = serde_json::to_string_pretty(&manifest) {
-        fs::write(&manifest_path, json_str)?;
-        println!("  created: AI Agent Project Manifest in onpkg.json");
+        fs::write(&onpkg_path, json_str)?;
+        println!("  synchronized: AI Agent Project Manifest in onpkg.json");
     }
+
+    // 8. Ensure docs directory exists and create/update workflow docs
+    fs::create_dir_all(&docs_dir)?;
+
+    let prd_path = docs_dir.join("prd.md");
+    if !prd_path.exists() {
+        let prd_template = r#"# Product Requirements Document (PRD) 🚀
+
+## Project Overview
+*Brief summary of the project, target audience, and main goals.*
+
+## Core Features & Scope
+- [ ] **Feature 1**: Description and user value.
+- [ ] **Feature 2**: Description and user value.
+
+## Success Metrics
+- Performance: Sleek UI, fast load times.
+- Quality: Visual excellence and rich aesthetics.
+
+## Future Scope (Out of Scope)
+*Features that are deferred to later versions.*
+"#;
+        fs::write(prd_path, prd_template)?;
+        println!("  created: Product Requirements Document in onpkg_docs/prd.md");
+    }
+
+    let content_path = docs_dir.join("content.md");
+    if !content_path.exists() {
+        let content_template = r#"# Content & Page Inventory 📝
+
+## Page Structure
+- **Home Page** (`/`): Brief description, hero section, features list.
+- **About Page** (`/about`): Story, team, value proposition.
+
+## Copywriting & Tone of Voice
+- **Tone**: Professional, modern, encouraging.
+- **Key Terminology**: *onpkg*, *AI Agent*, *Stack Scaffolding*.
+
+## Dynamic Assets
+- Logos, icons, and illustrations used across the pages.
+"#;
+        fs::write(content_path, content_template)?;
+        println!("  created: Content Inventory in onpkg_docs/content.md");
+    }
+
+    let design_path = docs_dir.join("design.md");
+    if !design_path.exists() {
+        let design_template = r#"# UI & Design System 🎨
+
+## Aesthetics & Theme
+- Sleek modern dark mode (e.g. HSL tailored color palette).
+- Smooth glassmorphism, dynamic gradients, micro-animations.
+
+## Color Palette (CSS Variables)
+```css
+:root {
+  --background: 240 10% 3.9%;
+  --foreground: 0 0% 98%;
+  --primary: 263.4 90% 50.4%; /* Neon Violet */
+  --accent: 180 100% 50%;     /* Neon Cyan */
+  --card: 240 10% 10%;
+  --border: 240 5.9% 15%;
+}
+```
+
+## Typography
+- Main Font: `Inter` or `Outfit` via Google Fonts.
+- Browser default sans-serif as fallback.
+
+## Key UI Components
+- **Navbar**: Floating with blur filter (`backdrop-filter: blur(12px)`).
+- **Cards**: Glassmorphic borders with linear gradient.
+- **Buttons**: Hover glow and micro-zoom effects.
+"#;
+        fs::write(design_path, design_template)?;
+        println!("  created: Design & UI Specification in onpkg_docs/design.md");
+    }
+
+    let implementation_path = docs_dir.join("implementation.md");
+    if !implementation_path.exists() {
+        let implementation_template = r#"# Technical Implementation Plan 🛠️
+
+## Technology Stack
+*Active technologies and framework choices.*
+
+## System Architecture & File Layout
+*Key directories and entrypoints.*
+
+## API Endpoints & Data Models
+*Routes and schema definitions.*
+
+## Key Tasks & File Modifications
+*Where code changes occur.*
+"#;
+        fs::write(implementation_path, implementation_template)?;
+        println!("  created: Technical Implementation Plan in onpkg_docs/implementation.md");
+    }
+
+    let todo_path = docs_dir.join("todo.md");
+    if !todo_path.exists() {
+        let todo_template = r#"# Task Tracker (todo.md) 📋
+
+## Setup & Scaffolding
+- [x] Initialize project structure with `onpkg`
+- [x] Configure tailwind/css modules
+- [x] Set up entrypoint and basic router
+
+## Active Work Streams
+- [ ] Build core layouts and design system (design.css)
+- [ ] Implement pages and navigation
+- [ ] Integrate database/storage
+- [ ] Add animations and polish transitions
+
+## Verification & Testing
+- [ ] Run lint checks and build validation
+- [ ] Audit responsive layout on mobile/desktop
+"#;
+        fs::write(todo_path, todo_template)?;
+        println!("  created: Task Tracker checklist in onpkg_docs/todo.md");
+    }
+
+    // 9. Re-generate INDEX.md with links to skills and workflow files
+    let mut index_content = r#"# Project AI Agent Skills 🧠
+
+This directory contains instructions and guidelines for AI agents working on this project.
+
+## Project Workflow 📋
+Use these documents to manage project progress, feature requests, and design alignment:
+- [Product Requirements (prd.md)](file://./prd.md)
+- [Content & Pages (content.md)](file://./content.md)
+- [UI & Design Tokens (design.md)](file://./design.md)
+- [Technical Implementation (implementation.md)](file://./implementation.md)
+- [Task Tracker (todo.md)](file://./todo.md)
+
+## Technology Skills 🛠️
+"#.to_string();
+
+    if active_skills.is_empty() {
+        index_content.push_str("No technology skills installed yet.\n");
+    } else {
+        for skill_file in &active_skills {
+            let skill_name = skill_file.strip_suffix(".md").unwrap_or(skill_file);
+            index_content.push_str(&format!(
+                "- [{skill_name}](file://./{skill_file}) / [{skill_name}/skill.md](file://./{skill_name}/skill.md)\n"
+            ));
+        }
+    }
+
+    fs::write(docs_dir.join("INDEX.md"), index_content)?;
+    println!("  updated: AI Docs Index in onpkg_docs/INDEX.md");
 
     Ok(())
 }

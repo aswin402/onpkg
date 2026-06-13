@@ -128,15 +128,6 @@ Get detailed info about a registry item.
 
 Set a custom registry URL (default: `https://registry.onpkg.dev`).
 
-### `onpkg sync [--dir <path>]`
-
-Sync the current project files, folders, dependencies, and active skills to `onpkg.json`. Also initializes/updates AI agent workflow documents (`prd.md`, `content.md`, `design.md`, `implementation.md`, `todo.md`) under `onpkg_docs/`.
-
-```bash
-onpkg sync
-onpkg sync --dir ./my-project
-```
-
 ### `onpkg doctor`
 
 Run diagnostics: check config, database, templates, skills, registry, and local runtimes.

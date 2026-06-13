@@ -40,6 +40,7 @@
 - **🏗️ Premium Architectures**: Scaffold entire application templates online instantly (complete structures, configs, routes, pages, state-management, and utilities).
 - **📦 Multi-Runtime Online Installer**: Detects project manifest files (`package.json`, `pyproject.toml`, `pubspec.yaml`, `Cargo.toml`) and runs the appropriate online package installer (`bun install`, `uv sync`, `flutter pub get`, `cargo check`) automatically.
 - **🧠 AI Agent Skills (`onpkg_docs/`)**: Automatically copies/generates specialized markdown files inside `onpkg_docs/` in the project root. These files serve as instructions/skills for AI agents (like Claude/Gemini) so they immediately know the rules, guidelines, commands, and patterns of the project.
+- **🔄 Spec-Driven Workflow & Syncing (`onpkg sync`)**: Dynamic recursive scanning of project files/dependencies to generate/update `onpkg.json` and scaffold Spec-Driven workflows (`prd.md`, `content.md`, `design.md`, `implementation.md`, `todo.md`) under `onpkg_docs/`.
 - **🤖 AI Skill & Template Generator (`onpkg ai`)**: Generate custom technology skills and complete TOML stack definitions using Gemini API (`gemini-2.5-flash`) by providing a simple description.
 - **🩺 Interactive TUI & Doctor**: Features environment diagnostics to verify Node.js, Bun, Python, Cargo, and template health.
 - **🗃️ SQLite Manifest Database**: Cataloging of installed skills and custom templates in `onpkg.db` with integrity diagnostics.
@@ -91,6 +92,7 @@ onpkg skill remove react
 ### Global Commands
 
 ```bash
+onpkg sync                        # sync files/packages to onpkg.json and update workflow docs
 onpkg doctor                      # environment health check
 onpkg update                      # check for updates
 ```

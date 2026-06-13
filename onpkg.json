@@ -1,0 +1,107 @@
+{
+  "agent_instructions": {
+    "active_skills": [
+      "onpkg.md"
+    ],
+    "docs_directory": "onpkg_docs/"
+  },
+  "architecture": {
+    "entrypoint": "src/main.rs"
+  },
+  "packages": {
+    "added_by_agent": [],
+    "core": [
+      "anyhow",
+      "chrono",
+      "clap",
+      "colored",
+      "git2",
+      "glob",
+      "indicatif",
+      "minijinja",
+      "reqwest",
+      "rusqlite",
+      "semver",
+      "serde",
+      "serde_json",
+      "tokio",
+      "toml",
+      "tracing",
+      "tracing-subscriber",
+      "walkdir"
+    ]
+  },
+  "project": {
+    "name": "onpkg",
+    "package_manager": "cargo",
+    "runtime": "rust",
+    "stack": "custom"
+  },
+  "scripts": {
+    "build": "cargo build",
+    "dev": "cargo run",
+    "test": "cargo test"
+  },
+  "sources": {
+    "directories": [
+      "builtin-skills",
+      "builtin-skills/frontend-design",
+      "builtin-skills/ui-ux-pro-max",
+      "docs",
+      "logs",
+      "src",
+      "src/templates",
+      "src/templates/builtin"
+    ],
+    "file_patterns": [
+      "*.json",
+      "*.md",
+      "*.rs",
+      "*.toml"
+    ],
+    "files": [
+      "Cargo.toml",
+      "README.md",
+      "SKILL.md",
+      "builtin-skills/express.md",
+      "builtin-skills/fastapi.md",
+      "builtin-skills/flutter.md",
+      "builtin-skills/frontend-design/SKILL.md",
+      "builtin-skills/hono.md",
+      "builtin-skills/mongodb.md",
+      "builtin-skills/next.md",
+      "builtin-skills/postgres.md",
+      "builtin-skills/prisma.md",
+      "builtin-skills/react.md",
+      "builtin-skills/rust.md",
+      "builtin-skills/tailwind.md",
+      "builtin-skills/ui-ux-pro-max/SKILL.md",
+      "builtin-skills/vite.md",
+      "docs/addstacks.md",
+      "docs/architecture.md",
+      "docs/features.md",
+      "docs/modifycodes.md",
+      "logs/.511e135ff91aaefe0332ed7891642766487592b1-audit.json",
+      "src/ai.rs",
+      "src/cli.rs",
+      "src/config.rs",
+      "src/db.rs",
+      "src/main.rs",
+      "src/pkg_registry.rs",
+      "src/registry.rs",
+      "src/skill.rs",
+      "src/stacks.rs",
+      "src/templates/builtin.rs",
+      "src/templates/builtin/fastapi.rs",
+      "src/templates/builtin/flutter.rs",
+      "src/templates/builtin/hono.rs",
+      "src/templates/builtin/mern.rs",
+      "src/templates/builtin/next_template.rs",
+      "src/templates/builtin/pern.rs",
+      "src/templates/builtin/react_vite.rs",
+      "src/templates/builtin/stacks_mod.rs",
+      "src/templates/mod.rs",
+      "src/tui.rs"
+    ]
+  }
+}

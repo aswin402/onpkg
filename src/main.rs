@@ -369,6 +369,9 @@ async fn main() -> Result<()> {
                                     &format!("Added {}@{}", pkg_info.name, pkg_info.version),
                                     Some(&format!("to project ({})", pkg_info.runtime)),
                                 );
+                                if let Err(e) = templates::sync_onpkg_project(&project_dir, None, None) {
+                                    TUI::warn(&format!("Failed to auto-sync project manifest: {}", e));
+                                }
                             }
                             Err(e) => {
                                 TUI::warn(&format!("{}", e));
@@ -698,6 +701,28 @@ content = """{{
         Command::Update => {
             TUI::info("Checking for updates...");
             TUI::warn("Self-update not yet implemented. Use 'cargo install --path .' to rebuild.");
+        }
+
+        Command::Sync { dir } => {
+            TUI::logo();
+            let target = if let Some(ref d) = dir {
+                std::path::PathBuf::from(d)
+            } else {
+                std::env::current_dir()?
+            };
+
+            let sp = TUI::spinner("Syncing project manifest and workflow documentation...");
+            let res = templates::sync_onpkg_project(&target, None, None);
+            sp.finish_and_clear();
+
+            match res {
+                Ok(_) => {
+                    TUI::success("Project synchronized successfully!", Some("onpkg.json & onpkg_docs/ updated"));
+                }
+                Err(e) => {
+                    TUI::warn(&format!("Sync failed: {}", e));
+                }
+            }
         }
     }
 
