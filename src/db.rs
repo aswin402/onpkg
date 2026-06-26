@@ -106,8 +106,15 @@ impl Database {
                 (name, version, runtime, type, source, cache_path, checksum, size_bytes, cached_at)
              VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9)",
             params![
-                pkg.name, pkg.version, pkg.runtime, pkg.r#type,
-                pkg.source, pkg.cache_path, pkg.checksum, pkg.size_bytes, pkg.cached_at
+                pkg.name,
+                pkg.version,
+                pkg.runtime,
+                pkg.r#type,
+                pkg.source,
+                pkg.cache_path,
+                pkg.checksum,
+                pkg.size_bytes,
+                pkg.cached_at
             ],
         )?;
         Ok(())
@@ -148,7 +155,9 @@ impl Database {
     }
 
     pub fn count_packages(&self) -> Result<i64> {
-        let count: i64 = self.conn.query_row("SELECT COUNT(*) FROM packages", [], |row| row.get(0))?;
+        let count: i64 = self
+            .conn
+            .query_row("SELECT COUNT(*) FROM packages", [], |row| row.get(0))?;
         Ok(count)
     }
 
@@ -166,7 +175,7 @@ impl Database {
     pub fn list_templates(&self) -> Result<Vec<Template>> {
         let mut stmt = self.conn.prepare(
             "SELECT name, category, description, version, source, files_count
-             FROM templates ORDER BY name"
+             FROM templates ORDER BY name",
         )?;
         let rows = stmt.query_map([], |row| {
             Ok(Template {
@@ -188,7 +197,7 @@ impl Database {
     pub fn get_template(&self, name: &str) -> Result<Option<Template>> {
         let mut stmt = self.conn.prepare(
             "SELECT name, category, description, version, source, files_count
-             FROM templates WHERE name = ?1"
+             FROM templates WHERE name = ?1",
         )?;
         match stmt.query_row(params![name], |row| {
             Ok(Template {
@@ -207,7 +216,9 @@ impl Database {
     }
 
     pub fn delete_template(&self, name: &str) -> Result<usize> {
-        let count = self.conn.execute("DELETE FROM templates WHERE name = ?1", params![name])?;
+        let count = self
+            .conn
+            .execute("DELETE FROM templates WHERE name = ?1", params![name])?;
         Ok(count)
     }
 
@@ -217,15 +228,21 @@ impl Database {
         self.conn.execute(
             "INSERT OR REPLACE INTO skills (name, description, version, source, path)
              VALUES (?1, ?2, ?3, ?4, ?5)",
-            params![skill.name, skill.description, skill.version, skill.source, skill.path],
+            params![
+                skill.name,
+                skill.description,
+                skill.version,
+                skill.source,
+                skill.path
+            ],
         )?;
         Ok(())
     }
 
     pub fn list_skills(&self) -> Result<Vec<Skill>> {
-        let mut stmt = self.conn.prepare(
-            "SELECT name, description, version, source, path FROM skills ORDER BY name"
-        )?;
+        let mut stmt = self
+            .conn
+            .prepare("SELECT name, description, version, source, path FROM skills ORDER BY name")?;
         let rows = stmt.query_map([], |row| {
             Ok(Skill {
                 name: row.get(0)?,
@@ -244,7 +261,7 @@ impl Database {
 
     pub fn get_skill(&self, name: &str) -> Result<Option<Skill>> {
         let mut stmt = self.conn.prepare(
-            "SELECT name, description, version, source, path FROM skills WHERE name = ?1"
+            "SELECT name, description, version, source, path FROM skills WHERE name = ?1",
         )?;
         match stmt.query_row(params![name], |row| {
             Ok(Skill {
@@ -262,7 +279,9 @@ impl Database {
     }
 
     pub fn delete_skill(&self, name: &str) -> Result<usize> {
-        let count = self.conn.execute("DELETE FROM skills WHERE name = ?1", params![name])?;
+        let count = self
+            .conn
+            .execute("DELETE FROM skills WHERE name = ?1", params![name])?;
         Ok(count)
     }
 }

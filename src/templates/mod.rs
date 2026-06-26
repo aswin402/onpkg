@@ -37,16 +37,39 @@ impl TemplateDefinition {
         if !self.technologies.is_empty() {
             return self.technologies.clone();
         }
-        
+
         match self.name.as_str() {
-            "react-vite" | "react-vite-full" | "react-vite-gsap" => vec!["react".to_string(), "vite".to_string(), "tailwind".to_string()],
-            "next-template" | "next-app" | "next-app-full" => vec!["next".to_string(), "react".to_string(), "tailwind".to_string(), "prisma".to_string(), "postgres".to_string()],
+            "react-vite" | "react-vite-full" | "react-vite-gsap" => vec![
+                "react".to_string(),
+                "vite".to_string(),
+                "tailwind".to_string(),
+            ],
+            "next-template" | "next-app" | "next-app-full" => vec![
+                "next".to_string(),
+                "react".to_string(),
+                "tailwind".to_string(),
+                "prisma".to_string(),
+                "postgres".to_string(),
+            ],
             "hono-api" => vec!["hono".to_string()],
-            "hono-full" => vec!["hono".to_string(), "prisma".to_string(), "postgres".to_string()],
+            "hono-full" => vec![
+                "hono".to_string(),
+                "prisma".to_string(),
+                "postgres".to_string(),
+            ],
             "express-api" => vec!["express".to_string()],
             "fastapi" | "fastapi-full" => vec!["fastapi".to_string()],
-            "mern" => vec!["mongodb".to_string(), "express".to_string(), "react".to_string()],
-            "pern" => vec!["postgres".to_string(), "express".to_string(), "react".to_string(), "prisma".to_string()],
+            "mern" => vec![
+                "mongodb".to_string(),
+                "express".to_string(),
+                "react".to_string(),
+            ],
+            "pern" => vec![
+                "postgres".to_string(),
+                "express".to_string(),
+                "react".to_string(),
+                "prisma".to_string(),
+            ],
             "flutter-app" | "flutter-riverpod" => vec!["flutter".to_string()],
             "rust-cli" => vec!["rust".to_string()],
             _ => vec![],
@@ -56,15 +79,18 @@ impl TemplateDefinition {
 
 impl From<crate::stacks::Stack> for TemplateDefinition {
     fn from(stack: crate::stacks::Stack) -> Self {
-        let files = stack.files.into_iter()
+        let files = stack
+            .files
+            .into_iter()
             .filter(|f| !f.path.starts_with("onpkg_docs/"))
             .map(|f| TemplateFile {
                 path: f.path,
                 content: f.content,
                 skip_template: true,
                 binary_content: f.binary_content,
-            }).collect();
-        
+            })
+            .collect();
+
         let mut technologies = vec![];
         if stack.name.contains("react") {
             technologies.push("react".to_string());
@@ -84,16 +110,22 @@ impl From<crate::stacks::Stack> for TemplateDefinition {
         if stack.name.contains("tailwind") {
             technologies.push("tailwind".to_string());
         }
-        if stack.packages.contains(&"prisma".to_string()) || stack.dev_packages.contains(&"prisma".to_string()) {
+        if stack.packages.contains(&"prisma".to_string())
+            || stack.dev_packages.contains(&"prisma".to_string())
+        {
             technologies.push("prisma".to_string());
         }
         if stack.packages.contains(&"express".to_string()) {
             technologies.push("express".to_string());
         }
-        if stack.packages.contains(&"mongoose".to_string()) || stack.packages.contains(&"mongodb".to_string()) {
+        if stack.packages.contains(&"mongoose".to_string())
+            || stack.packages.contains(&"mongodb".to_string())
+        {
             technologies.push("mongodb".to_string());
         }
-        if stack.packages.contains(&"pg".to_string()) || stack.packages.contains(&"postgresql".to_string()) {
+        if stack.packages.contains(&"pg".to_string())
+            || stack.packages.contains(&"postgresql".to_string())
+        {
             technologies.push("postgres".to_string());
         }
 
@@ -109,7 +141,7 @@ impl From<crate::stacks::Stack> for TemplateDefinition {
             }
             _ => {}
         }
-        
+
         technologies.dedup();
 
         TemplateDefinition {
@@ -175,7 +207,9 @@ impl TemplateEngine {
                         if let Ok(content) = fs::read_to_string(&path) {
                             if let Ok(tmpl) = toml::from_str::<TemplateDefinition>(&content) {
                                 // De-duplicate by name
-                                if let Some(idx) = templates.iter().position(|t| t.name == tmpl.name) {
+                                if let Some(idx) =
+                                    templates.iter().position(|t| t.name == tmpl.name)
+                                {
                                     templates[idx] = tmpl;
                                 } else {
                                     templates.push(tmpl);
@@ -254,7 +288,10 @@ impl TemplateEngine {
         // Generate README.md documentation if one doesn't exist
         let readme_path = target_dir.join("README.md");
         if !readme_path.exists() && !created.iter().any(|p| p.to_lowercase() == "readme.md") {
-            let project_name = vars.get("project_name").map(|s| s.as_str()).unwrap_or(&template.name);
+            let project_name = vars
+                .get("project_name")
+                .map(|s| s.as_str())
+                .unwrap_or(&template.name);
             let readme = generate_readme(project_name, template);
             fs::write(&readme_path, &readme)?;
             created.push("README.md".to_string());
@@ -265,7 +302,7 @@ impl TemplateEngine {
         if let Ok(_) = fs::create_dir_all(&root_assets) {
             let _ = fs::write(root_assets.join("logo.svg"), logo_svg_transparent());
         }
-        
+
         let src_assets = target_dir.join("src").join("assets");
         if let Ok(_) = fs::create_dir_all(&src_assets) {
             let _ = fs::write(src_assets.join("logo.svg"), logo_svg_transparent());
@@ -418,7 +455,10 @@ This project was scaffolded using the `{template_name}` template v{template_vers
         var_table = template
             .variables
             .iter()
-            .map(|v| format!("- `{}`: {} (default: `{}`)", v.name, v.description, v.default))
+            .map(|v| format!(
+                "- `{}`: {} (default: `{}`)",
+                v.name, v.description, v.default
+            ))
             .collect::<Vec<_>>()
             .join("\n"),
     )
@@ -428,7 +468,8 @@ This project was scaffolded using the `{template_name}` template v{template_vers
 pub fn install_dependencies_online(target_dir: &Path, custom_manager: Option<&str>) -> Result<()> {
     // 1. Detect which manifest files are in the target directory
     let has_package_json = target_dir.join("package.json").exists();
-    let has_pyproject = target_dir.join("pyproject.toml").exists() || target_dir.join("requirements.txt").exists();
+    let has_pyproject =
+        target_dir.join("pyproject.toml").exists() || target_dir.join("requirements.txt").exists();
     let has_pubspec = target_dir.join("pubspec.yaml").exists();
     let has_cargo = target_dir.join("Cargo.toml").exists();
 
@@ -436,18 +477,33 @@ pub fn install_dependencies_online(target_dir: &Path, custom_manager: Option<&st
     if has_package_json {
         let manager = custom_manager.unwrap_or_else(|| {
             // Check if bun is available, otherwise npm
-            if std::process::Command::new("bun").arg("--version").output().is_ok() {
+            if std::process::Command::new("bun")
+                .arg("--version")
+                .output()
+                .is_ok()
+            {
                 "bun"
-            } else if std::process::Command::new("pnpm").arg("--version").output().is_ok() {
+            } else if std::process::Command::new("pnpm")
+                .arg("--version")
+                .output()
+                .is_ok()
+            {
                 "pnpm"
-            } else if std::process::Command::new("yarn").arg("--version").output().is_ok() {
+            } else if std::process::Command::new("yarn")
+                .arg("--version")
+                .output()
+                .is_ok()
+            {
                 "yarn"
             } else {
                 "npm"
             }
         });
 
-        println!("  info: package.json found. Running '{} install' online...", manager);
+        println!(
+            "  info: package.json found. Running '{} install' online...",
+            manager
+        );
         let status = std::process::Command::new(manager)
             .arg("install")
             .current_dir(target_dir)
@@ -455,20 +511,33 @@ pub fn install_dependencies_online(target_dir: &Path, custom_manager: Option<&st
             .with_context(|| format!("Failed to run '{} install'", manager))?;
 
         if !status.success() {
-            eprintln!("  warn: '{} install' failed with status: {}", manager, status);
+            eprintln!(
+                "  warn: '{} install' failed with status: {}",
+                manager, status
+            );
         } else {
-            println!("  done: dependencies installed successfully using '{}'", manager);
+            println!(
+                "  done: dependencies installed successfully using '{}'",
+                manager
+            );
         }
     } else if has_pyproject {
         let manager = custom_manager.unwrap_or_else(|| {
-            if std::process::Command::new("uv").arg("--version").output().is_ok() {
+            if std::process::Command::new("uv")
+                .arg("--version")
+                .output()
+                .is_ok()
+            {
                 "uv"
             } else {
                 "pip"
             }
         });
 
-        println!("  info: Python project found. Running installer via '{}'...", manager);
+        println!(
+            "  info: Python project found. Running installer via '{}'...",
+            manager
+        );
         let status = if manager == "uv" {
             if target_dir.join("pyproject.toml").exists() {
                 std::process::Command::new("uv")
@@ -522,7 +591,10 @@ pub fn install_dependencies_online(target_dir: &Path, custom_manager: Option<&st
                         return Ok(());
                     }
                 }
-                eprintln!("  warn: Flutter/Dart dependency installation failed with status: {}", s);
+                eprintln!(
+                    "  warn: Flutter/Dart dependency installation failed with status: {}",
+                    s
+                );
             }
             Err(e) => eprintln!("  warn: Failed to run flutter pub get: {}", e),
         }
@@ -544,7 +616,11 @@ pub fn install_dependencies_online(target_dir: &Path, custom_manager: Option<&st
 }
 
 // Generate the onpkg_docs directory and skills
-pub fn generate_agent_docs(technologies: &[String], target_dir: &Path, config: &Config) -> Result<()> {
+pub fn generate_agent_docs(
+    technologies: &[String],
+    target_dir: &Path,
+    config: &Config,
+) -> Result<()> {
     let docs_dir = target_dir.join("onpkg_docs");
     std::fs::create_dir_all(&docs_dir)?;
 
@@ -565,7 +641,7 @@ pub fn generate_agent_docs(technologies: &[String], target_dir: &Path, config: &
             // Write to onpkg_docs/<tech>.md
             let tech_file = docs_dir.join(format!("{}.md", tech));
             std::fs::write(&tech_file, &content)?;
-            
+
             // Also write to onpkg_docs/<tech>/skill.md
             let tech_sub_dir = docs_dir.join(tech);
             std::fs::create_dir_all(&tech_sub_dir)?;
@@ -592,10 +668,10 @@ This is a generated AI agent skill document for `{name}`.
 "#,
                 name = tech
             );
-            
+
             let tech_file = docs_dir.join(format!("{}.md", tech));
             std::fs::write(&tech_file, &generic_skill)?;
-            
+
             let tech_sub_dir = docs_dir.join(tech);
             std::fs::create_dir_all(&tech_sub_dir)?;
             std::fs::write(tech_sub_dir.join("skill.md"), &generic_skill)?;
@@ -606,7 +682,9 @@ This is a generated AI agent skill document for `{name}`.
     // Generate INDEX.md
     let mut index_content = "# Project AI Agent Skills 🧠\n\nThis directory contains instructions and guidelines for AI agents working on this project.\n\n## Available Skills\n".to_string();
     for tech in technologies {
-        index_content.push_str(&format!("- [{tech}](file://./{tech}.md) / [{tech}/skill.md](file://./{tech}/skill.md)\n"));
+        index_content.push_str(&format!(
+            "- [{tech}](file://./{tech}.md) / [{tech}/skill.md](file://./{tech}/skill.md)\n"
+        ));
     }
     std::fs::write(docs_dir.join("INDEX.md"), index_content)?;
 
@@ -647,7 +725,7 @@ pub fn sync_onpkg_project(
     // 3. Detect runtime and package manager
     let mut runtime = "node".to_string();
     let mut package_manager = "npm".to_string();
-    
+
     // Lock/manifest detection
     if target_dir.join("bun.lockb").exists() || target_dir.join("bun.lock").exists() {
         runtime = "bun".to_string();
@@ -666,14 +744,24 @@ pub fn sync_onpkg_project(
         runtime = "node".to_string();
         package_manager = "npm".to_string();
         if let Some(ref m) = existing_manifest {
-            if let Some(pm) = m.get("project").and_then(|p| p.get("package_manager")).and_then(|p| p.as_str()) {
+            if let Some(pm) = m
+                .get("project")
+                .and_then(|p| p.get("package_manager"))
+                .and_then(|p| p.as_str())
+            {
                 package_manager = pm.to_string();
             }
-            if let Some(rt) = m.get("project").and_then(|p| p.get("runtime")).and_then(|p| p.as_str()) {
+            if let Some(rt) = m
+                .get("project")
+                .and_then(|p| p.get("runtime"))
+                .and_then(|p| p.as_str())
+            {
                 runtime = rt.to_string();
             }
         }
-    } else if target_dir.join("pyproject.toml").exists() || target_dir.join("requirements.txt").exists() {
+    } else if target_dir.join("pyproject.toml").exists()
+        || target_dir.join("requirements.txt").exists()
+    {
         runtime = "python".to_string();
         package_manager = "uv".to_string();
     } else if target_dir.join("pubspec.yaml").exists() {
@@ -690,38 +778,37 @@ pub fn sync_onpkg_project(
     let mut extensions = std::collections::BTreeSet::new();
 
     let allowed_exts = [
-        "rs", "ts", "tsx", "js", "jsx", "py", "dart", "html", "css", "prisma", "sql", "toml", "json", "yaml", "yml", "md"
+        "rs", "ts", "tsx", "js", "jsx", "py", "dart", "html", "css", "prisma", "sql", "toml",
+        "json", "yaml", "yml", "md",
     ];
 
-    let walker = WalkDir::new(target_dir)
-        .into_iter()
-        .filter_entry(|e| {
-            let file_name = e.file_name().to_string_lossy();
-            let relative_path = e.path().strip_prefix(target_dir).unwrap_or(e.path());
-            let rel_str = relative_path.to_string_lossy();
-            
-            if e.file_type().is_dir() {
-                let name = file_name.as_ref();
-                name != ".git" &&
-                name != ".crush" &&
-                name != "node_modules" &&
-                name != "target" &&
-                name != "build" &&
-                name != "dist" &&
-                name != ".next" &&
-                name != ".svelte-kit" &&
-                name != "venv" &&
-                name != ".venv" &&
-                name != "__pycache__" &&
-                name != ".dart_tool" &&
-                name != "ios" &&
-                name != "android" &&
-                name != "onpkg_docs"
-            } else {
-                let name = file_name.as_ref();
-                name != "onpkg.json" && !rel_str.contains("onpkg_docs/")
-            }
-        });
+    let walker = WalkDir::new(target_dir).into_iter().filter_entry(|e| {
+        let file_name = e.file_name().to_string_lossy();
+        let relative_path = e.path().strip_prefix(target_dir).unwrap_or(e.path());
+        let rel_str = relative_path.to_string_lossy();
+
+        if e.file_type().is_dir() {
+            let name = file_name.as_ref();
+            name != ".git"
+                && name != ".crush"
+                && name != "node_modules"
+                && name != "target"
+                && name != "build"
+                && name != "dist"
+                && name != ".next"
+                && name != ".svelte-kit"
+                && name != "venv"
+                && name != ".venv"
+                && name != "__pycache__"
+                && name != ".dart_tool"
+                && name != "ios"
+                && name != "android"
+                && name != "onpkg_docs"
+        } else {
+            let name = file_name.as_ref();
+            name != "onpkg.json" && !rel_str.contains("onpkg_docs/")
+        }
+    });
 
     for entry in walker.filter_map(|e| e.ok()) {
         let path = entry.path();
@@ -743,7 +830,10 @@ pub fn sync_onpkg_project(
         }
     }
 
-    let mut file_patterns: Vec<String> = extensions.into_iter().map(|ext| format!("*.{}", ext)).collect();
+    let mut file_patterns: Vec<String> = extensions
+        .into_iter()
+        .map(|ext| format!("*.{}", ext))
+        .collect();
     file_patterns.sort();
     let mut directories: Vec<String> = dirs.into_iter().collect();
     directories.sort();
@@ -751,11 +841,19 @@ pub fn sync_onpkg_project(
 
     // 5. Detect architecture components
     let mut architecture = std::collections::BTreeMap::new();
-    
+
     // Entrypoints
     let entrypoint_patterns = [
-        "src/main.rs", "src/main.tsx", "src/main.ts", "src/index.js", "src/index.tsx", "src/index.ts",
-        "lib/main.dart", "app/main.py", "src/main.py", "main.py"
+        "src/main.rs",
+        "src/main.tsx",
+        "src/main.ts",
+        "src/index.js",
+        "src/index.tsx",
+        "src/index.ts",
+        "lib/main.dart",
+        "app/main.py",
+        "src/main.py",
+        "main.py",
     ];
     for ep in &entrypoint_patterns {
         if target_dir.join(ep).exists() {
@@ -763,10 +861,16 @@ pub fn sync_onpkg_project(
             break;
         }
     }
-    
+
     // Routing directories
     let routing_patterns = [
-        "src/routes", "src/pages", "app/routes", "app", "src/app", "routes", "pages"
+        "src/routes",
+        "src/pages",
+        "app/routes",
+        "app",
+        "src/app",
+        "routes",
+        "pages",
     ];
     for r in &routing_patterns {
         if target_dir.join(r).exists() {
@@ -777,7 +881,11 @@ pub fn sync_onpkg_project(
 
     // Components
     let components_patterns = [
-        "src/components", "components", "src/ui", "src/components/ui", "ui"
+        "src/components",
+        "components",
+        "src/ui",
+        "src/components/ui",
+        "ui",
     ];
     for c in &components_patterns {
         if target_dir.join(c).exists() {
@@ -788,7 +896,12 @@ pub fn sync_onpkg_project(
 
     // Styles
     let styles_patterns = [
-        "src/index.css", "src/App.css", "src/styles.css", "styles", "src/global.css", "src/styles/global.css"
+        "src/index.css",
+        "src/App.css",
+        "src/styles.css",
+        "styles",
+        "src/global.css",
+        "src/styles/global.css",
     ];
     for s in &styles_patterns {
         if target_dir.join(s).exists() {
@@ -799,7 +912,12 @@ pub fn sync_onpkg_project(
 
     // Database
     let db_patterns = [
-        "prisma/schema.prisma", "src/db", "db", "schema.sql", "migrations", "src/database"
+        "prisma/schema.prisma",
+        "src/db",
+        "db",
+        "schema.sql",
+        "migrations",
+        "src/database",
     ];
     for d in &db_patterns {
         if target_dir.join(d).exists() {
@@ -809,9 +927,7 @@ pub fn sync_onpkg_project(
     }
 
     // Tests
-    let tests_patterns = [
-        "src/tests", "tests", "test", "src/test"
-    ];
+    let tests_patterns = ["src/tests", "tests", "test", "src/test"];
     for t in &tests_patterns {
         if target_dir.join(t).exists() {
             architecture.insert("tests".to_string(), t.to_string());
@@ -880,7 +996,11 @@ pub fn sync_onpkg_project(
                     if let Some(deps) = project.get("dependencies").and_then(|d| d.as_array()) {
                         for dep in deps {
                             if let Some(dep_str) = dep.as_str() {
-                                let name = dep_str.split(&['>', '=', '<', '~', '!'][..]).next().unwrap_or(dep_str).trim();
+                                let name = dep_str
+                                    .split(&['>', '=', '<', '~', '!'][..])
+                                    .next()
+                                    .unwrap_or(dep_str)
+                                    .trim();
                                 core_packages.push(name.to_string());
                             }
                         }
@@ -888,7 +1008,10 @@ pub fn sync_onpkg_project(
                 }
             }
         }
-        scripts.insert("dev".to_string(), "uvicorn app.main:app --reload".to_string());
+        scripts.insert(
+            "dev".to_string(),
+            "uvicorn app.main:app --reload".to_string(),
+        );
     }
 
     // Default scripts if empty
@@ -905,14 +1028,14 @@ pub fn sync_onpkg_project(
     // 7. Collect active skills from onpkg_docs/
     let docs_dir = target_dir.join("onpkg_docs");
     let mut active_skills = Vec::new();
-    
+
     // If technologies were supplied during creation, make sure we pre-populate skills list
     if let Some(techs) = technologies {
         for tech in techs {
             active_skills.push(format!("{}.md", tech));
         }
     }
-    
+
     if docs_dir.exists() {
         if let Ok(entries) = fs::read_dir(&docs_dir) {
             for entry in entries.filter_map(|e| e.ok()) {
@@ -957,7 +1080,11 @@ pub fn sync_onpkg_project(
     // Preserve added_by_agent packages
     let mut added_by_agent = Vec::new();
     if let Some(ref m) = existing_manifest {
-        if let Some(arr) = m.get("packages").and_then(|p| p.get("added_by_agent")).and_then(|a| a.as_array()) {
+        if let Some(arr) = m
+            .get("packages")
+            .and_then(|p| p.get("added_by_agent"))
+            .and_then(|a| a.as_array())
+        {
             for v in arr {
                 if let Some(s) = v.as_str() {
                     added_by_agent.push(s.to_string());
@@ -968,38 +1095,111 @@ pub fn sync_onpkg_project(
 
     // Build the manifest JSON
     let mut manifest = std::collections::BTreeMap::new();
-    
+
     let mut project_info = std::collections::BTreeMap::new();
     project_info.insert("name".to_string(), serde_json::Value::String(project_name));
     project_info.insert("stack".to_string(), serde_json::Value::String(final_stack));
     project_info.insert("runtime".to_string(), serde_json::Value::String(runtime));
-    project_info.insert("package_manager".to_string(), serde_json::Value::String(package_manager));
-    manifest.insert("project".to_string(), serde_json::Value::Object(project_info.into_iter().collect()));
+    project_info.insert(
+        "package_manager".to_string(),
+        serde_json::Value::String(package_manager),
+    );
+    manifest.insert(
+        "project".to_string(),
+        serde_json::Value::Object(project_info.into_iter().collect()),
+    );
 
-    let arch_info: serde_json::Map<String, serde_json::Value> = architecture.into_iter().map(|(k, v)| (k, serde_json::Value::String(v))).collect();
-    manifest.insert("architecture".to_string(), serde_json::Value::Object(arch_info));
+    let arch_info: serde_json::Map<String, serde_json::Value> = architecture
+        .into_iter()
+        .map(|(k, v)| (k, serde_json::Value::String(v)))
+        .collect();
+    manifest.insert(
+        "architecture".to_string(),
+        serde_json::Value::Object(arch_info),
+    );
 
     let mut agent_info = std::collections::BTreeMap::new();
-    agent_info.insert("docs_directory".to_string(), serde_json::Value::String("onpkg_docs/".to_string()));
-    agent_info.insert("active_skills".to_string(), serde_json::Value::Array(active_skills.iter().map(|s| serde_json::Value::String(s.clone())).collect()));
-    manifest.insert("agent_instructions".to_string(), serde_json::Value::Object(agent_info.into_iter().collect()));
+    agent_info.insert(
+        "docs_directory".to_string(),
+        serde_json::Value::String("onpkg_docs/".to_string()),
+    );
+    agent_info.insert(
+        "active_skills".to_string(),
+        serde_json::Value::Array(
+            active_skills
+                .iter()
+                .map(|s| serde_json::Value::String(s.clone()))
+                .collect(),
+        ),
+    );
+    manifest.insert(
+        "agent_instructions".to_string(),
+        serde_json::Value::Object(agent_info.into_iter().collect()),
+    );
 
-    let scripts_info: serde_json::Map<String, serde_json::Value> = scripts.into_iter().map(|(k, v)| (k, serde_json::Value::String(v))).collect();
-    manifest.insert("scripts".to_string(), serde_json::Value::Object(scripts_info));
+    let scripts_info: serde_json::Map<String, serde_json::Value> = scripts
+        .into_iter()
+        .map(|(k, v)| (k, serde_json::Value::String(v)))
+        .collect();
+    manifest.insert(
+        "scripts".to_string(),
+        serde_json::Value::Object(scripts_info),
+    );
 
     let mut packages_info = std::collections::BTreeMap::new();
     core_packages.sort();
     core_packages.dedup();
-    packages_info.insert("core".to_string(), serde_json::Value::Array(core_packages.into_iter().map(serde_json::Value::String).collect()));
-    packages_info.insert("added_by_agent".to_string(), serde_json::Value::Array(added_by_agent.into_iter().map(serde_json::Value::String).collect()));
-    manifest.insert("packages".to_string(), serde_json::Value::Object(packages_info.into_iter().collect()));
+    packages_info.insert(
+        "core".to_string(),
+        serde_json::Value::Array(
+            core_packages
+                .into_iter()
+                .map(serde_json::Value::String)
+                .collect(),
+        ),
+    );
+    packages_info.insert(
+        "added_by_agent".to_string(),
+        serde_json::Value::Array(
+            added_by_agent
+                .into_iter()
+                .map(serde_json::Value::String)
+                .collect(),
+        ),
+    );
+    manifest.insert(
+        "packages".to_string(),
+        serde_json::Value::Object(packages_info.into_iter().collect()),
+    );
 
     // Add sources block for tree-sitter & code analysis!
     let mut sources_info = std::collections::BTreeMap::new();
-    sources_info.insert("directories".to_string(), serde_json::Value::Array(directories.into_iter().map(serde_json::Value::String).collect()));
-    sources_info.insert("files".to_string(), serde_json::Value::Array(files.into_iter().map(serde_json::Value::String).collect()));
-    sources_info.insert("file_patterns".to_string(), serde_json::Value::Array(file_patterns.into_iter().map(serde_json::Value::String).collect()));
-    manifest.insert("sources".to_string(), serde_json::Value::Object(sources_info.into_iter().collect()));
+    sources_info.insert(
+        "directories".to_string(),
+        serde_json::Value::Array(
+            directories
+                .into_iter()
+                .map(serde_json::Value::String)
+                .collect(),
+        ),
+    );
+    sources_info.insert(
+        "files".to_string(),
+        serde_json::Value::Array(files.into_iter().map(serde_json::Value::String).collect()),
+    );
+    sources_info.insert(
+        "file_patterns".to_string(),
+        serde_json::Value::Array(
+            file_patterns
+                .into_iter()
+                .map(serde_json::Value::String)
+                .collect(),
+        ),
+    );
+    manifest.insert(
+        "sources".to_string(),
+        serde_json::Value::Object(sources_info.into_iter().collect()),
+    );
 
     // Write to target_dir/onpkg.json
     if let Ok(json_str) = serde_json::to_string_pretty(&manifest) {
@@ -1141,7 +1341,8 @@ Use these documents to manage project progress, feature requests, and design ali
 - [Task Tracker (todo.md)](file://./todo.md)
 
 ## Technology Skills 🛠️
-"#.to_string();
+"#
+    .to_string();
 
     if active_skills.is_empty() {
         index_content.push_str("No technology skills installed yet.\n");
@@ -1374,4 +1575,3 @@ pub fn logo_svg_transparent() -> &'static str {
   </g>
 </svg>"##
 }
-

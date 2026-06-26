@@ -85,7 +85,11 @@ impl Registry {
             .await
             .map_err(|e| anyhow!("Failed to fetch template '{}': {}", name, e))?;
         if !resp.status().is_success() {
-            return Err(anyhow!("Template '{}' not found (HTTP {})", name, resp.status()));
+            return Err(anyhow!(
+                "Template '{}' not found (HTTP {})",
+                name,
+                resp.status()
+            ));
         }
         let tmpl: RegistryTemplate = resp.json().await?;
         Ok(tmpl)
@@ -100,13 +104,21 @@ impl Registry {
             .await
             .map_err(|e| anyhow!("Failed to fetch skill '{}': {}", name, e))?;
         if !resp.status().is_success() {
-            return Err(anyhow!("Skill '{}' not found (HTTP {})", name, resp.status()));
+            return Err(anyhow!(
+                "Skill '{}' not found (HTTP {})",
+                name,
+                resp.status()
+            ));
         }
         let skill: RegistrySkill = resp.json().await?;
         Ok(skill)
     }
 
-    pub async fn download_template_source(&self, _source: &str, _dest: &std::path::Path) -> Result<()> {
+    pub async fn download_template_source(
+        &self,
+        _source: &str,
+        _dest: &std::path::Path,
+    ) -> Result<()> {
         Err(anyhow!("Template download not yet implemented"))
     }
 
@@ -114,7 +126,8 @@ impl Registry {
         let url = format!("{}/api/templates", self.config.registry_url());
         Err(anyhow!(
             "Publishing to {} is not yet implemented. The template '{}' is saved locally.",
-            url, name
+            url,
+            name
         ))
     }
 

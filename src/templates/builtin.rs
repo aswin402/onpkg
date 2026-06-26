@@ -37,12 +37,24 @@ fn react_vite() -> TemplateDefinition {
         description: "React 19 + Vite + TypeScript starter with ESLint".to_string(),
         version: "1.0.0".to_string(),
         variables: vec![
-            TemplateVariable { name: "project_name".to_string(), description: "Project name".to_string(), default: "my-app".to_string() },
-            TemplateVariable { name: "author".to_string(), description: "Author name".to_string(), default: "developer".to_string() },
+            TemplateVariable {
+                name: "project_name".to_string(),
+                description: "Project name".to_string(),
+                default: "my-app".to_string(),
+            },
+            TemplateVariable {
+                name: "author".to_string(),
+                description: "Author name".to_string(),
+                default: "developer".to_string(),
+            },
         ],
         technologies: vec![],
         files: vec![
-            TemplateFile { path: "package.json".to_string(), skip_template: false, binary_content: None, content: r#"{
+            TemplateFile {
+                path: "package.json".to_string(),
+                skip_template: false,
+                binary_content: None,
+                content: r#"{
   "name": "{{ project_name }}",
   "private": true,
   "version": "0.0.0",
@@ -63,8 +75,14 @@ fn react_vite() -> TemplateDefinition {
     "typescript": "^5.6.0",
     "vite": "^6.0.0"
   }
-}"#.to_string() },
-            TemplateFile { path: "tsconfig.json".to_string(), skip_template: false, binary_content: None, content: r#"{
+}"#
+                .to_string(),
+            },
+            TemplateFile {
+                path: "tsconfig.json".to_string(),
+                skip_template: false,
+                binary_content: None,
+                content: r#"{
   "compilerOptions": {
     "target": "ES2020",
     "useDefineForClassFields": true,
@@ -84,14 +102,26 @@ fn react_vite() -> TemplateDefinition {
     "noUncheckedSideEffectImports": true
   },
   "include": ["src"]
-}"#.to_string() },
-            TemplateFile { path: "vite.config.ts".to_string(), skip_template: false, binary_content: None, content: r#"import { defineConfig } from 'vite'
+}"#
+                .to_string(),
+            },
+            TemplateFile {
+                path: "vite.config.ts".to_string(),
+                skip_template: false,
+                binary_content: None,
+                content: r#"import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 
 export default defineConfig({
   plugins: [react()],
-})"#.to_string() },
-            TemplateFile { path: "index.html".to_string(), skip_template: false, binary_content: None, content: r#"<!doctype html>
+})"#
+                .to_string(),
+            },
+            TemplateFile {
+                path: "index.html".to_string(),
+                skip_template: false,
+                binary_content: None,
+                content: r#"<!doctype html>
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
@@ -102,8 +132,14 @@ export default defineConfig({
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
   </body>
-</html>"#.to_string() },
-            TemplateFile { path: "src/main.tsx".to_string(), skip_template: false, binary_content: None, content: r#"import { StrictMode } from 'react'
+</html>"#
+                    .to_string(),
+            },
+            TemplateFile {
+                path: "src/main.tsx".to_string(),
+                skip_template: false,
+                binary_content: None,
+                content: r#"import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
 import App from './App.tsx'
 
@@ -111,8 +147,14 @@ createRoot(document.getElementById('root')!).render(
   <StrictMode>
     <App />
   </StrictMode>,
-)"#.to_string() },
-            TemplateFile { path: "src/App.tsx".to_string(), skip_template: false, binary_content: None, content: r#"function App() {
+)"#
+                .to_string(),
+            },
+            TemplateFile {
+                path: "src/App.tsx".to_string(),
+                skip_template: false,
+                binary_content: None,
+                content: r#"function App() {
   return (
     <div>
       <h1>Hello {{ project_name }}</h1>
@@ -120,9 +162,17 @@ createRoot(document.getElementById('root')!).render(
   )
 }
 
-export default App"#.to_string() },
-            TemplateFile { path: "src/vite-env.d.ts".to_string(), skip_template: false, binary_content: None, content: r#"/// <reference types="vite/client" />
-"#.to_string() },
+export default App"#
+                    .to_string(),
+            },
+            TemplateFile {
+                path: "src/vite-env.d.ts".to_string(),
+                skip_template: false,
+                binary_content: None,
+                content: r#"/// <reference types="vite/client" />
+"#
+                .to_string(),
+            },
         ],
     }
 }
@@ -133,12 +183,18 @@ fn react_vite_tailwind() -> TemplateDefinition {
         category: "frontend".to_string(),
         description: "React 19 + Vite + TypeScript + Tailwind CSS v4".to_string(),
         version: "1.0.0".to_string(),
-        variables: vec![
-            TemplateVariable { name: "project_name".to_string(), description: "Project name".to_string(), default: "my-app".to_string() },
-        ],
+        variables: vec![TemplateVariable {
+            name: "project_name".to_string(),
+            description: "Project name".to_string(),
+            default: "my-app".to_string(),
+        }],
         technologies: vec![],
         files: vec![
-            TemplateFile { path: "package.json".to_string(), skip_template: false, binary_content: None, content: r#"{
+            TemplateFile {
+                path: "package.json".to_string(),
+                skip_template: false,
+                binary_content: None,
+                content: r#"{
   "name": "{{ project_name }}",
   "private": true,
   "version": "0.0.0",
@@ -161,8 +217,14 @@ fn react_vite_tailwind() -> TemplateDefinition {
     "typescript": "^5.6.0",
     "vite": "^6.0.0"
   }
-}"#.to_string() },
-            TemplateFile { path: "tsconfig.json".to_string(), skip_template: false, binary_content: None, content: r#"{
+}"#
+                .to_string(),
+            },
+            TemplateFile {
+                path: "tsconfig.json".to_string(),
+                skip_template: false,
+                binary_content: None,
+                content: r#"{
   "compilerOptions": {
     "target": "ES2020",
     "useDefineForClassFields": true,
@@ -182,15 +244,27 @@ fn react_vite_tailwind() -> TemplateDefinition {
     "noUncheckedSideEffectImports": true
   },
   "include": ["src"]
-}"#.to_string() },
-            TemplateFile { path: "vite.config.ts".to_string(), skip_template: false, binary_content: None, content: r#"import { defineConfig } from 'vite'
+}"#
+                .to_string(),
+            },
+            TemplateFile {
+                path: "vite.config.ts".to_string(),
+                skip_template: false,
+                binary_content: None,
+                content: r#"import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 import tailwindcss from '@tailwindcss/vite'
 
 export default defineConfig({
   plugins: [react(), tailwindcss()],
-})"#.to_string() },
-            TemplateFile { path: "index.html".to_string(), skip_template: false, binary_content: None, content: r#"<!doctype html>
+})"#
+                .to_string(),
+            },
+            TemplateFile {
+                path: "index.html".to_string(),
+                skip_template: false,
+                binary_content: None,
+                content: r#"<!doctype html>
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
@@ -201,8 +275,14 @@ export default defineConfig({
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
   </body>
-</html>"#.to_string() },
-            TemplateFile { path: "src/main.tsx".to_string(), skip_template: false, binary_content: None, content: r#"import { StrictMode } from 'react'
+</html>"#
+                    .to_string(),
+            },
+            TemplateFile {
+                path: "src/main.tsx".to_string(),
+                skip_template: false,
+                binary_content: None,
+                content: r#"import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
 import App from './App.tsx'
 import './index.css'
@@ -211,8 +291,14 @@ createRoot(document.getElementById('root')!).render(
   <StrictMode>
     <App />
   </StrictMode>,
-)"#.to_string() },
-            TemplateFile { path: "src/App.tsx".to_string(), skip_template: false, binary_content: None, content: r#"function App() {
+)"#
+                .to_string(),
+            },
+            TemplateFile {
+                path: "src/App.tsx".to_string(),
+                skip_template: false,
+                binary_content: None,
+                content: r#"function App() {
   return (
     <div className="min-h-screen bg-gray-900 text-white flex items-center justify-center">
       <h1 className="text-4xl font-bold">Hello {{ project_name }}</h1>
@@ -220,11 +306,25 @@ createRoot(document.getElementById('root')!).render(
   )
 }
 
-export default App"#.to_string() },
-            TemplateFile { path: "src/index.css".to_string(), skip_template: false, binary_content: None, content: r#"@import "tailwindcss";
-"#.to_string() },
-            TemplateFile { path: "src/vite-env.d.ts".to_string(), skip_template: false, binary_content: None, content: r#"/// <reference types="vite/client" />
-"#.to_string() },
+export default App"#
+                    .to_string(),
+            },
+            TemplateFile {
+                path: "src/index.css".to_string(),
+                skip_template: false,
+                binary_content: None,
+                content: r#"@import "tailwindcss";
+"#
+                .to_string(),
+            },
+            TemplateFile {
+                path: "src/vite-env.d.ts".to_string(),
+                skip_template: false,
+                binary_content: None,
+                content: r#"/// <reference types="vite/client" />
+"#
+                .to_string(),
+            },
         ],
     }
 }
@@ -237,12 +337,18 @@ fn next_app() -> TemplateDefinition {
         category: "frontend".to_string(),
         description: "Next.js 15 App Router + TypeScript starter".to_string(),
         version: "1.0.0".to_string(),
-        variables: vec![
-            TemplateVariable { name: "project_name".to_string(), description: "Project name".to_string(), default: "my-app".to_string() },
-        ],
+        variables: vec![TemplateVariable {
+            name: "project_name".to_string(),
+            description: "Project name".to_string(),
+            default: "my-app".to_string(),
+        }],
         technologies: vec![],
         files: vec![
-            TemplateFile { path: "package.json".to_string(), skip_template: false, binary_content: None, content: r#"{
+            TemplateFile {
+                path: "package.json".to_string(),
+                skip_template: false,
+                binary_content: None,
+                content: r#"{
   "name": "{{ project_name }}",
   "version": "0.1.0",
   "private": true,
@@ -263,8 +369,14 @@ fn next_app() -> TemplateDefinition {
     "@types/react-dom": "^19.0.0",
     "typescript": "^5.6.0"
   }
-}"#.to_string() },
-            TemplateFile { path: "tsconfig.json".to_string(), skip_template: false, binary_content: None, content: r#"{
+}"#
+                .to_string(),
+            },
+            TemplateFile {
+                path: "tsconfig.json".to_string(),
+                skip_template: false,
+                binary_content: None,
+                content: r#"{
   "compilerOptions": {
     "target": "ES2017",
     "lib": ["dom", "dom.iterable", "esnext"],
@@ -284,13 +396,25 @@ fn next_app() -> TemplateDefinition {
   },
   "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx", ".next/types/**/*.ts"],
   "exclude": ["node_modules"]
-}"#.to_string() },
-            TemplateFile { path: "next.config.ts".to_string(), skip_template: false, binary_content: None, content: r#"import type { NextConfig } from "next";
+}"#
+                .to_string(),
+            },
+            TemplateFile {
+                path: "next.config.ts".to_string(),
+                skip_template: false,
+                binary_content: None,
+                content: r#"import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {};
 
-export default nextConfig;"#.to_string() },
-            TemplateFile { path: "src/app/layout.tsx".to_string(), skip_template: false, binary_content: None, content: r#"import type { Metadata } from "next";
+export default nextConfig;"#
+                    .to_string(),
+            },
+            TemplateFile {
+                path: "src/app/layout.tsx".to_string(),
+                skip_template: false,
+                binary_content: None,
+                content: r#"import type { Metadata } from "next";
 
 export const metadata: Metadata = {
   title: "{{ project_name }}",
@@ -303,11 +427,24 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       <body>{children}</body>
     </html>
   );
-}"#.to_string() },
-            TemplateFile { path: "src/app/page.tsx".to_string(), skip_template: false, binary_content: None, content: r#"export default function Home() {
+}"#
+                .to_string(),
+            },
+            TemplateFile {
+                path: "src/app/page.tsx".to_string(),
+                skip_template: false,
+                binary_content: None,
+                content: r#"export default function Home() {
   return <h1>Hello {{ project_name }}</h1>;
-}"#.to_string() },
-            TemplateFile { path: "src/app/globals.css".to_string(), skip_template: false, binary_content: None, content: r#"body { font-family: system-ui, sans-serif; }"#.to_string() },
+}"#
+                .to_string(),
+            },
+            TemplateFile {
+                path: "src/app/globals.css".to_string(),
+                skip_template: false,
+                binary_content: None,
+                content: r#"body { font-family: system-ui, sans-serif; }"#.to_string(),
+            },
         ],
     }
 }
@@ -318,12 +455,18 @@ fn next_app_full() -> TemplateDefinition {
         category: "frontend".to_string(),
         description: "Next.js 15 + Tailwind CSS + shadcn/ui + Prisma + Auth.js".to_string(),
         version: "1.0.0".to_string(),
-        variables: vec![
-            TemplateVariable { name: "project_name".to_string(), description: "Project name".to_string(), default: "my-app".to_string() },
-        ],
+        variables: vec![TemplateVariable {
+            name: "project_name".to_string(),
+            description: "Project name".to_string(),
+            default: "my-app".to_string(),
+        }],
         technologies: vec![],
         files: vec![
-            TemplateFile { path: "package.json".to_string(), skip_template: false, binary_content: None, content: r#"{
+            TemplateFile {
+                path: "package.json".to_string(),
+                skip_template: false,
+                binary_content: None,
+                content: r#"{
   "name": "{{ project_name }}",
   "version": "0.1.0",
   "private": true,
@@ -349,8 +492,14 @@ fn next_app_full() -> TemplateDefinition {
     "tailwindcss": "^4.0.0",
     "typescript": "^5.6.0"
   }
-}"#.to_string() },
-            TemplateFile { path: "src/app/layout.tsx".to_string(), skip_template: false, binary_content: None, content: r#"import type { Metadata } from "next";
+}"#
+                .to_string(),
+            },
+            TemplateFile {
+                path: "src/app/layout.tsx".to_string(),
+                skip_template: false,
+                binary_content: None,
+                content: r#"import type { Metadata } from "next";
 import "./globals.css";
 
 export const metadata: Metadata = {
@@ -363,9 +512,17 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       <body>{children}</body>
     </html>
   );
-}"#.to_string() },
-            TemplateFile { path: "src/app/globals.css".to_string(), skip_template: false, binary_content: None, content: r#"@import "tailwindcss";
-"#.to_string() },
+}"#
+                .to_string(),
+            },
+            TemplateFile {
+                path: "src/app/globals.css".to_string(),
+                skip_template: false,
+                binary_content: None,
+                content: r#"@import "tailwindcss";
+"#
+                .to_string(),
+            },
         ],
     }
 }
@@ -378,12 +535,18 @@ fn hono_api() -> TemplateDefinition {
         category: "backend".to_string(),
         description: "Hono + TypeScript API server with Zod validation".to_string(),
         version: "1.0.0".to_string(),
-        variables: vec![
-            TemplateVariable { name: "project_name".to_string(), description: "Project name".to_string(), default: "my-api".to_string() },
-        ],
+        variables: vec![TemplateVariable {
+            name: "project_name".to_string(),
+            description: "Project name".to_string(),
+            default: "my-api".to_string(),
+        }],
         technologies: vec![],
         files: vec![
-            TemplateFile { path: "package.json".to_string(), skip_template: false, binary_content: None, content: r#"{
+            TemplateFile {
+                path: "package.json".to_string(),
+                skip_template: false,
+                binary_content: None,
+                content: r#"{
   "name": "{{ project_name }}",
   "version": "0.1.0",
   "type": "module",
@@ -401,8 +564,14 @@ fn hono_api() -> TemplateDefinition {
     "tsx": "^4.19.0",
     "typescript": "^5.6.0"
   }
-}"#.to_string() },
-            TemplateFile { path: "tsconfig.json".to_string(), skip_template: false, binary_content: None, content: r#"{
+}"#
+                .to_string(),
+            },
+            TemplateFile {
+                path: "tsconfig.json".to_string(),
+                skip_template: false,
+                binary_content: None,
+                content: r#"{
   "compilerOptions": {
     "target": "ES2022",
     "module": "ESNext",
@@ -415,14 +584,22 @@ fn hono_api() -> TemplateDefinition {
     "declaration": true
   },
   "include": ["src"]
-}"#.to_string() },
-            TemplateFile { path: "src/index.ts".to_string(), skip_template: false, binary_content: None, content: r#"import { Hono } from 'hono'
+}"#
+                .to_string(),
+            },
+            TemplateFile {
+                path: "src/index.ts".to_string(),
+                skip_template: false,
+                binary_content: None,
+                content: r#"import { Hono } from 'hono'
 
 const app = new Hono()
 
 app.get('/', (c) => c.json({ message: 'Hello from {{ project_name }}' }))
 
-export default app"#.to_string() },
+export default app"#
+                    .to_string(),
+            },
         ],
     }
 }
@@ -433,12 +610,18 @@ fn hono_api_full() -> TemplateDefinition {
         category: "backend".to_string(),
         description: "Hono + Prisma + PostgreSQL + Auth + Zod".to_string(),
         version: "1.0.0".to_string(),
-        variables: vec![
-            TemplateVariable { name: "project_name".to_string(), description: "Project name".to_string(), default: "my-api".to_string() },
-        ],
+        variables: vec![TemplateVariable {
+            name: "project_name".to_string(),
+            description: "Project name".to_string(),
+            default: "my-api".to_string(),
+        }],
         technologies: vec![],
         files: vec![
-            TemplateFile { path: "package.json".to_string(), skip_template: false, binary_content: None, content: r#"{
+            TemplateFile {
+                path: "package.json".to_string(),
+                skip_template: false,
+                binary_content: None,
+                content: r#"{
   "name": "{{ project_name }}",
   "version": "0.1.0",
   "type": "module",
@@ -461,15 +644,27 @@ fn hono_api_full() -> TemplateDefinition {
     "tsx": "^4.19.0",
     "typescript": "^5.6.0"
   }
-}"#.to_string() },
-            TemplateFile { path: "src/index.ts".to_string(), skip_template: false, binary_content: None, content: r#"import { Hono } from 'hono'
+}"#
+                .to_string(),
+            },
+            TemplateFile {
+                path: "src/index.ts".to_string(),
+                skip_template: false,
+                binary_content: None,
+                content: r#"import { Hono } from 'hono'
 
 const app = new Hono()
 
 app.get('/', (c) => c.json({ message: 'Hello from {{ project_name }}' }))
 
-export default app"#.to_string() },
-            TemplateFile { path: "prisma/schema.prisma".to_string(), skip_template: false, binary_content: None, content: r#"generator client {
+export default app"#
+                    .to_string(),
+            },
+            TemplateFile {
+                path: "prisma/schema.prisma".to_string(),
+                skip_template: false,
+                binary_content: None,
+                content: r#"generator client {
   provider = "prisma-client-js"
 }
 
@@ -484,10 +679,18 @@ model User {
   name      String?
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
-}"#.to_string() },
-            TemplateFile { path: "".to_string() + ".env", skip_template: false, binary_content: None, content: r#"DATABASE_URL="postgresql://localhost:5432/{{ project_name }}"
+}"#
+                .to_string(),
+            },
+            TemplateFile {
+                path: "".to_string() + ".env",
+                skip_template: false,
+                binary_content: None,
+                content: r#"DATABASE_URL="postgresql://localhost:5432/{{ project_name }}"
 JWT_SECRET="change-me"
-"#.to_string() },
+"#
+                .to_string(),
+            },
         ],
     }
 }
@@ -500,12 +703,18 @@ fn express_api() -> TemplateDefinition {
         category: "backend".to_string(),
         description: "Express.js + TypeScript REST API with middleware".to_string(),
         version: "1.0.0".to_string(),
-        variables: vec![
-            TemplateVariable { name: "project_name".to_string(), description: "Project name".to_string(), default: "my-api".to_string() },
-        ],
+        variables: vec![TemplateVariable {
+            name: "project_name".to_string(),
+            description: "Project name".to_string(),
+            default: "my-api".to_string(),
+        }],
         technologies: vec![],
         files: vec![
-            TemplateFile { path: "package.json".to_string(), skip_template: false, binary_content: None, content: r#"{
+            TemplateFile {
+                path: "package.json".to_string(),
+                skip_template: false,
+                binary_content: None,
+                content: r#"{
   "name": "{{ project_name }}",
   "version": "0.1.0",
   "type": "module",
@@ -526,8 +735,14 @@ fn express_api() -> TemplateDefinition {
     "tsx": "^4.19.0",
     "typescript": "^5.6.0"
   }
-}"#.to_string() },
-            TemplateFile { path: "src/index.ts".to_string(), skip_template: false, binary_content: None, content: r#"import express from "express"
+}"#
+                .to_string(),
+            },
+            TemplateFile {
+                path: "src/index.ts".to_string(),
+                skip_template: false,
+                binary_content: None,
+                content: r#"import express from "express"
 import cors from "cors"
 import helmet from 'helmet'
 import morgan from 'morgan'
@@ -546,7 +761,9 @@ app.get('/', (_req, res) => {
 
 app.listen(port, () => {
   console.log(`Server running on port ${port}`)
-})"#.to_string() },
+})"#
+                .to_string(),
+            },
         ],
     }
 }
@@ -559,12 +776,18 @@ fn fastapi() -> TemplateDefinition {
         category: "backend".to_string(),
         description: "FastAPI + SQLAlchemy + Pydantic + Alembic starter".to_string(),
         version: "1.0.0".to_string(),
-        variables: vec![
-            TemplateVariable { name: "project_name".to_string(), description: "Project name".to_string(), default: "my-api".to_string() },
-        ],
+        variables: vec![TemplateVariable {
+            name: "project_name".to_string(),
+            description: "Project name".to_string(),
+            default: "my-api".to_string(),
+        }],
         technologies: vec![],
         files: vec![
-            TemplateFile { path: "pyproject.toml".to_string(), skip_template: false, binary_content: None, content: r#"[project]
+            TemplateFile {
+                path: "pyproject.toml".to_string(),
+                skip_template: false,
+                binary_content: None,
+                content: r#"[project]
 name = "{{ project_name }}"
 version = "0.1.0"
 requires-python = ">=3.12"
@@ -578,16 +801,28 @@ dependencies = [
 ]
 [dependency-groups]
 dev = ["pytest>=8.0.0"]
-"#.to_string() },
-            TemplateFile { path: "src/main.py".to_string(), skip_template: false, binary_content: None, content: r#"from fastapi import FastAPI
+"#
+                .to_string(),
+            },
+            TemplateFile {
+                path: "src/main.py".to_string(),
+                skip_template: false,
+                binary_content: None,
+                content: r#"from fastapi import FastAPI
 
 app = FastAPI(title="{{ project_name }}")
 
 @app.get("/")
 async def root():
     return {"message": "Hello from {{ project_name }}"}
-"#.to_string() },
-            TemplateFile { path: "src/config.py".to_string(), skip_template: false, binary_content: None, content: r#"from pydantic_settings import BaseSettings
+"#
+                .to_string(),
+            },
+            TemplateFile {
+                path: "src/config.py".to_string(),
+                skip_template: false,
+                binary_content: None,
+                content: r#"from pydantic_settings import BaseSettings
 
 class Settings(BaseSettings):
     database_url: str = "postgresql://localhost:5432/{{ project_name }}"
@@ -597,10 +832,18 @@ class Settings(BaseSettings):
         env_file = ".env"
 
 settings = Settings()
-"#.to_string() },
-            TemplateFile { path: "".to_string() + ".env", skip_template: false, binary_content: None, content: r#"DATABASE_URL="postgresql://localhost:5432/{{ project_name }}"
+"#
+                .to_string(),
+            },
+            TemplateFile {
+                path: "".to_string() + ".env",
+                skip_template: false,
+                binary_content: None,
+                content: r#"DATABASE_URL="postgresql://localhost:5432/{{ project_name }}"
 DEBUG=true
-"#.to_string() },
+"#
+                .to_string(),
+            },
         ],
     }
 }
@@ -611,12 +854,18 @@ fn fastapi_full() -> TemplateDefinition {
         category: "backend".to_string(),
         description: ("FastAPI + SQLAlchemy + Auth + Celery + Docker").to_string(),
         version: "1.0.0".to_string(),
-        variables: vec![
-            TemplateVariable { name: "project_name".to_string(), description: "Project name".to_string(), default: "my-api".to_string() },
-        ],
+        variables: vec![TemplateVariable {
+            name: "project_name".to_string(),
+            description: "Project name".to_string(),
+            default: "my-api".to_string(),
+        }],
         technologies: vec![],
         files: vec![
-            TemplateFile { path: "pyproject.toml".to_string(), skip_template: false, binary_content: None, content: r#"[project]
+            TemplateFile {
+                path: "pyproject.toml".to_string(),
+                skip_template: false,
+                binary_content: None,
+                content: r#"[project]
 name = "{{ project_name }}"
 version = "0.1.0"
 requires-python = ">=3.12"
@@ -634,22 +883,40 @@ dependencies = [
 ]
 [dependency-groups]
 dev = ["pytest>=8.0.0", "httpx>=0.27.0"]
-"#.to_string() },
-            TemplateFile { path: "src/main.py".to_string(), skip_template: false, binary_content: None, content: r#"from fastapi import FastAPI
+"#
+                .to_string(),
+            },
+            TemplateFile {
+                path: "src/main.py".to_string(),
+                skip_template: false,
+                binary_content: None,
+                content: r#"from fastapi import FastAPI
 
 app = FastAPI(title="{{ project_name }}")
 
 @app.get("/")
 async def root():
     return {"message": "Hello from {{ project_name }}"}
-"#.to_string() },
-            TemplateFile { path: "Dockerfile".to_string(), skip_template: false, binary_content: None, content: r#"FROM python:3.12-slim
+"#
+                .to_string(),
+            },
+            TemplateFile {
+                path: "Dockerfile".to_string(),
+                skip_template: false,
+                binary_content: None,
+                content: r#"FROM python:3.12-slim
 WORKDIR /app
 COPY . .
 RUN pip install .
 CMD ["uvicorn", "src.main:app", "--host", "0.0.0.0", "--port", "8000"]
-"#.to_string() },
-            TemplateFile { path: "docker-compose.yml".to_string(), skip_template: false, binary_content: None, content: r#"version: "3.9"
+"#
+                .to_string(),
+            },
+            TemplateFile {
+                path: "docker-compose.yml".to_string(),
+                skip_template: false,
+                binary_content: None,
+                content: r#"version: "3.9"
 services:
   api:
     build: .
@@ -667,7 +934,9 @@ services:
     image: redis:7-alpine
     ports:
       - "6379:6379"
-"#.to_string() },
+"#
+                .to_string(),
+            },
         ],
     }
 }
@@ -680,12 +949,18 @@ fn mern() -> TemplateDefinition {
         category: "fullstack".to_string(),
         description: ("MongoDB + Express + React + Node.js fullstack app").to_string(),
         version: "1.0.0".to_string(),
-        variables: vec![
-            TemplateVariable { name: "project_name".to_string(), description: "Project name".to_string(), default: "my-app".to_string() },
-        ],
+        variables: vec![TemplateVariable {
+            name: "project_name".to_string(),
+            description: "Project name".to_string(),
+            default: "my-app".to_string(),
+        }],
         technologies: vec![],
         files: vec![
-            TemplateFile { path: "package.json".to_string(), skip_template: false, binary_content: None, content: r#"{
+            TemplateFile {
+                path: "package.json".to_string(),
+                skip_template: false,
+                binary_content: None,
+                content: r#"{
   "name": "{{ project_name }}",
   "private": true,
   "scripts": {
@@ -696,8 +971,14 @@ fn mern() -> TemplateDefinition {
   "devDependencies": {
     "concurrently": "^9.0.0"
   }
-}"#.to_string() },
-            TemplateFile { path: "server/package.json".to_string(), skip_template: false, binary_content: None, content: r#"{
+}"#
+                .to_string(),
+            },
+            TemplateFile {
+                path: "server/package.json".to_string(),
+                skip_template: false,
+                binary_content: None,
+                content: r#"{
   "name": "{{ project_name }}-server",
   "type": "module",
   "scripts": {
@@ -715,8 +996,14 @@ fn mern() -> TemplateDefinition {
     "tsx": "^4.19.0",
     "typescript": "^5.6.0"
   }
-}"#.to_string() },
-            TemplateFile { path: "server/src/index.ts".to_string(), skip_template: false, binary_content: None, content: r#"import express from "express"
+}"#
+                .to_string(),
+            },
+            TemplateFile {
+                path: "server/src/index.ts".to_string(),
+                skip_template: false,
+                binary_content: None,
+                content: r#"import express from "express"
 import mongoose from "mongoose"
 import cors from "cors"
 import dotenv from "dotenv"
@@ -732,8 +1019,14 @@ mongoose.connect(process.env.MONGODB_URI || 'mongodb://localhost:27017/{{ projec
 
 app.get('/', (_req, res) => res.json({ message: 'Hello from {{ project_name }}' }))
 
-app.listen(process.env.PORT || 5000, () => console.log("Server running"))"#.to_string() },
-            TemplateFile { path: "client/package.json".to_string(), skip_template: false, binary_content: None, content: r#"{
+app.listen(process.env.PORT || 5000, () => console.log("Server running"))"#
+                    .to_string(),
+            },
+            TemplateFile {
+                path: "client/package.json".to_string(),
+                skip_template: false,
+                binary_content: None,
+                content: r#"{
   "name": "{{ project_name }}-client",
   "type": "module",
   "scripts": {
@@ -752,7 +1045,9 @@ app.listen(process.env.PORT || 5000, () => console.log("Server running"))"#.to_s
     "typescript": "^5.6.0",
     "vite": "^6.0.0"
   }
-}"#.to_string() },
+}"#
+                .to_string(),
+            },
         ],
     }
 }
@@ -763,12 +1058,18 @@ fn pern() -> TemplateDefinition {
         category: "fullstack".to_string(),
         description: "PostgreSQL + Express + React + Node.js fullstack app".to_string(),
         version: "1.0.0".to_string(),
-        variables: vec![
-            TemplateVariable { name: "project_name".to_string(), description: "Project name".to_string(), default: "my-app".to_string() },
-        ],
+        variables: vec![TemplateVariable {
+            name: "project_name".to_string(),
+            description: "Project name".to_string(),
+            default: "my-app".to_string(),
+        }],
         technologies: vec![],
         files: vec![
-            TemplateFile { path: "package.json".to_string(), skip_template: false, binary_content: None, content: r#"{
+            TemplateFile {
+                path: "package.json".to_string(),
+                skip_template: false,
+                binary_content: None,
+                content: r#"{
   "name": "{{ project_name }}",
   "private": true,
   "scripts": {
@@ -777,8 +1078,14 @@ fn pern() -> TemplateDefinition {
     "dev:client": "cd client && npm run dev"
   },
   "devDependencies": { "concurrently": "^9.0.0" }
-}"#.to_string() },
-            TemplateFile { path: "server/package.json".to_string(), skip_template: false, binary_content: None, content: r#"{
+}"#
+                .to_string(),
+            },
+            TemplateFile {
+                path: "server/package.json".to_string(),
+                skip_template: false,
+                binary_content: None,
+                content: r#"{
   "name": "{{ project_name }}-server",
   "type": "module",
   "scripts": { "dev": "tsx watch src/index.ts" },
@@ -794,7 +1101,9 @@ fn pern() -> TemplateDefinition {
     "tsx": "^4.19.0",
     "typescript": "^5.6.0"
   }
-}"#.to_string() },
+}"#
+                .to_string(),
+            },
         ],
     }
 }
@@ -807,12 +1116,18 @@ fn flutter_app() -> TemplateDefinition {
         category: "app".to_string(),
         description: "Flutter + Riverpod + GoRouter starter app".to_string(),
         version: "1.0.0".to_string(),
-        variables: vec![
-            TemplateVariable { name: "project_name".to_string(), description: "Project name".to_string(), default: "my_app".to_string() },
-        ],
+        variables: vec![TemplateVariable {
+            name: "project_name".to_string(),
+            description: "Project name".to_string(),
+            default: "my_app".to_string(),
+        }],
         technologies: vec![],
         files: vec![
-            TemplateFile { path: "pubspec.yaml".to_string(), skip_template: false, binary_content: None, content: r#"name: {{ project_name }}
+            TemplateFile {
+                path: "pubspec.yaml".to_string(),
+                skip_template: false,
+                binary_content: None,
+                content: r#"name: {{ project_name }}
 description: "Generated by onpkg"
 publish_to: none
 version: 1.0.0+1
@@ -833,8 +1148,14 @@ dev_dependencies:
 
 flutter:
   uses-material-design: true
-"#.to_string() },
-            TemplateFile { path: "lib/main.dart".to_string(), skip_template: false, binary_content: None, content: r#"import 'package:flutter/material.dart';
+"#
+                .to_string(),
+            },
+            TemplateFile {
+                path: "lib/main.dart".to_string(),
+                skip_template: false,
+                binary_content: None,
+                content: r#"import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 void main() {
@@ -868,7 +1189,9 @@ class HomePage extends StatelessWidget {
     );
   }
 }
-"#.to_string() },
+"#
+                .to_string(),
+            },
         ],
     }
 }
@@ -919,12 +1242,18 @@ fn minimal_rust_cli() -> TemplateDefinition {
         category: "app".to_string(),
         description: "Minimal Rust CLI app with clap and anyhow".to_string(),
         version: "1.0.0".to_string(),
-        variables: vec![
-            TemplateVariable { name: "project_name".to_string(), description: "Project name".to_string(), default: "my-cli".to_string() },
-        ],
+        variables: vec![TemplateVariable {
+            name: "project_name".to_string(),
+            description: "Project name".to_string(),
+            default: "my-cli".to_string(),
+        }],
         technologies: vec![],
         files: vec![
-            TemplateFile { path: "Cargo.toml".to_string(), skip_template: false, binary_content: None, content: r#"[package]
+            TemplateFile {
+                path: "Cargo.toml".to_string(),
+                skip_template: false,
+                binary_content: None,
+                content: r#"[package]
 name = "{{ project_name }}"
 version = "0.1.0"
 edition = "2021"
@@ -932,22 +1261,44 @@ edition = "2021"
 [dependencies]
 clap = { version = "4.5", features = ["derive"] }
 anyhow = "1.0"
-"#.to_string() },
-            TemplateFile { path: "src/main.rs".to_string(), skip_template: false, binary_content: None, content: r#"use clap::Parser;
+"#
+                .to_string(),
+            },
+            TemplateFile {
+                path: ".cargo/config.toml".to_string(),
+                skip_template: false,
+                binary_content: None,
+                content: r#"[build]
+# Limit parallel compilation jobs to conserve CPU and RAM
+jobs = 2
 
-#[derive(Parser)]
-#[command(name = "{{ project_name }}", version = "0.1.0")]
-struct Args {
-    name: Option<String>,
-}
-
-fn main() -> anyhow::Result<()> {
-    let args = Args::parse();
-    let name = args.name.unwrap_or_else(|| "World".to_string());
-    println!("Hello, {}!", name);
-    Ok(())
-}
-"#.to_string() },
+[target.'cfg(target_os = "linux")']
+# Limit the number of threads used by the linker to reduce peak RAM usage on Linux
+rustflags = ["-C", "link-arg=-Wl,--threads=2"]
+"#
+                .to_string(),
+            },
+            TemplateFile {
+                path: "src/main.rs".to_string(),
+                skip_template: false,
+                binary_content: None,
+                content: r#"use clap::Parser;
+ 
+ #[derive(Parser)]
+ #[command(name = "{{ project_name }}", version = "0.1.0")]
+ struct Args {
+     name: Option<String>,
+ }
+ 
+ fn main() -> anyhow::Result<()> {
+     let args = Args::parse();
+     let name = args.name.unwrap_or_else(|| "World".to_string());
+     println!("Hello, {}!", name);
+     Ok(())
+ }
+ "#
+                .to_string(),
+            },
         ],
     }
 }

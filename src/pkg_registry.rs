@@ -35,12 +35,21 @@ impl PkgRegistry {
             "pypi" | "pip" => self.fetch_pypi(name).await,
             "pub" | "dart" | "flutter" => self.fetch_pub(name).await,
             "cargo" | "rust" => self.fetch_cargo(name).await,
-            _ => Err(anyhow!("Unknown runtime '{}'. Supported: npm, pypi, pub, cargo", runtime)),
+            _ => Err(anyhow!(
+                "Unknown runtime '{}'. Supported: npm, pypi, pub, cargo",
+                runtime
+            )),
         }
     }
 
     /// Add a package to a project's manifest file
-    pub fn add_to_project(&self, name: &str, version: &str, runtime: &str, project_dir: &Path) -> Result<()> {
+    pub fn add_to_project(
+        &self,
+        name: &str,
+        version: &str,
+        runtime: &str,
+        project_dir: &Path,
+    ) -> Result<()> {
         match runtime {
             "npm" => add_to_npm_project(name, version, project_dir),
             "pypi" | "pip" => add_to_python_project(name, version, project_dir),
@@ -54,7 +63,11 @@ impl PkgRegistry {
         let url = format!("https://registry.npmjs.org/{}", name);
         let resp = self.client.get(&url).send().await?;
         if !resp.status().is_success() {
-            return Err(anyhow!("npm package '{}' not found (HTTP {})", name, resp.status()));
+            return Err(anyhow!(
+                "npm package '{}' not found (HTTP {})",
+                name,
+                resp.status()
+            ));
         }
         let data: NpmResponse = resp.json().await?;
         let latest = data.dist_tags.get("latest").cloned().unwrap_or_default();
@@ -75,7 +88,11 @@ impl PkgRegistry {
         let url = format!("https://pypi.org/pypi/{}/json", name);
         let resp = self.client.get(&url).send().await?;
         if !resp.status().is_success() {
-            return Err(anyhow!("PyPI package '{}' not found (HTTP {})", name, resp.status()));
+            return Err(anyhow!(
+                "PyPI package '{}' not found (HTTP {})",
+                name,
+                resp.status()
+            ));
         }
         let data: PyPIResponse = resp.json().await?;
         let info = data.info;
@@ -95,7 +112,11 @@ impl PkgRegistry {
         let url = format!("https://pub.dev/api/packages/{}", name);
         let resp = self.client.get(&url).send().await?;
         if !resp.status().is_success() {
-            return Err(anyhow!("pub.dev package '{}' not found (HTTP {})", name, resp.status()));
+            return Err(anyhow!(
+                "pub.dev package '{}' not found (HTTP {})",
+                name,
+                resp.status()
+            ));
         }
         let data: PubResponse = resp.json().await?;
         let latest = data.latest;
@@ -114,12 +135,18 @@ impl PkgRegistry {
 
     async fn fetch_cargo(&self, name: &str) -> Result<PkgInfo> {
         let url = format!("https://crates.io/api/v1/crates/{}", name);
-        let resp = self.client.get(&url)
+        let resp = self
+            .client
+            .get(&url)
             .header("User-Agent", "onpkg/0.1.0")
             .send()
             .await?;
         if !resp.status().is_success() {
-            return Err(anyhow!("crates.io crate '{}' not found (HTTP {})", name, resp.status()));
+            return Err(anyhow!(
+                "crates.io crate '{}' not found (HTTP {})",
+                name,
+                resp.status()
+            ));
         }
         let data: CargoResponse = resp.json().await?;
         let crate_data = data.crate_data;
@@ -236,7 +263,10 @@ fn add_to_npm_project(name: &str, version: &str, project_dir: &Path) -> Result<(
     let deps = obj.get_mut("dependencies").unwrap();
     deps.as_object_mut()
         .ok_or_else(|| anyhow!("dependencies is not an object"))?
-        .insert(name.to_string(), serde_json::Value::String(format!("^{}", version)));
+        .insert(
+            name.to_string(),
+            serde_json::Value::String(format!("^{}", version)),
+        );
 
     std::fs::write(&pkg_path, serde_json::to_string_pretty(&json)?)?;
     Ok(())
@@ -251,7 +281,10 @@ fn add_to_python_project(name: &str, version: &str, project_dir: &Path) -> Resul
         let dep_line = format!("{}>={}", name, version);
         // Append to dependency array in pyproject.toml
         if content.contains("[project]") && content.contains("dependencies = [") {
-            let new_content = content.replace("dependencies = [", &format!("dependencies = [\n    \"{}\",", dep_line));
+            let new_content = content.replace(
+                "dependencies = [",
+                &format!("dependencies = [\n    \"{}\",", dep_line),
+            );
             std::fs::write(&pyproject, new_content)?;
         } else {
             // Append to end of file
@@ -280,7 +313,12 @@ fn add_to_flutter_project(name: &str, version: &str, project_dir: &Path) -> Resu
         let after = &content[pos..];
         if let Some(end_of_section) = after.find("\n\ndev_dependencies:") {
             let before = &content[..pos + after.len() - after[end_of_section..].len()];
-            format!("{}\n{}\n{}", before.trim_end(), dep_line, &content[pos + after.len() - after[end_of_section..].len()..])
+            format!(
+                "{}\n{}\n{}",
+                before.trim_end(),
+                dep_line,
+                &content[pos + after.len() - after[end_of_section..].len()..]
+            )
         } else {
             format!("{}\n{}\n", content.trim_end(), dep_line)
         }
@@ -312,7 +350,12 @@ fn add_to_cargo_project(name: &str, version: &str, project_dir: &Path) -> Result
         }
         result.join("\n")
     } else {
-        format!("{}\n[dependencies]\n{} = \"{}\"\n", content.trim_end(), name, version)
+        format!(
+            "{}\n[dependencies]\n{} = \"{}\"\n",
+            content.trim_end(),
+            name,
+            version
+        )
     };
     std::fs::write(&cargo_toml, new_content)?;
     Ok(())

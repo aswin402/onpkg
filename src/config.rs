@@ -53,8 +53,7 @@ impl Config {
         if path.exists() {
             let content = fs::read_to_string(&path)
                 .with_context(|| format!("Failed to read config from {}", path.display()))?;
-            toml::from_str(&content)
-                .map_err(|e| anyhow!("Failed to parse config.toml: {}", e))
+            toml::from_str(&content).map_err(|e| anyhow!("Failed to parse config.toml: {}", e))
         } else {
             let config = Config::default();
             config.save()?;

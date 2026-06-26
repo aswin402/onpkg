@@ -9,11 +9,11 @@ pub mod stacks;
 pub mod templates;
 pub mod tui;
 
-use crate::cli::{
-    Args, Command, PkgSubcommand, RegistrySubcommand, SkillSubcommand, TemplateSubcommand,
-    StackSubcommand, AiSubcommand,
-};
 use crate::ai::AiGenerator;
+use crate::cli::{
+    AiSubcommand, Args, Command, PkgSubcommand, RegistrySubcommand, SkillSubcommand,
+    StackSubcommand, TemplateSubcommand,
+};
 use crate::config::Config;
 use crate::db::Database;
 use crate::pkg_registry::PkgRegistry;
@@ -73,19 +73,19 @@ async fn main() -> Result<()> {
             });
             let onpkg_path = dir.join("onpkg.json");
             if !onpkg_path.exists() {
-                std::fs::write(
-                    &onpkg_path,
-                    serde_json::to_string_pretty(&project_config)?,
-                )?;
+                std::fs::write(&onpkg_path, serde_json::to_string_pretty(&project_config)?)?;
                 TUI::success("Initialized onpkg project", Some("onpkg.json"));
             } else {
                 TUI::info("Project already initialized (onpkg.json exists)");
             }
 
             if let Some(ref tmpl_name) = template {
-                let tmpl = template_engine
-                    .find(tmpl_name)
-                    .ok_or_else(|| anyhow!("Template '{}' not found. Run: onpkg template list", tmpl_name))?;
+                let tmpl = template_engine.find(tmpl_name).ok_or_else(|| {
+                    anyhow!(
+                        "Template '{}' not found. Run: onpkg template list",
+                        tmpl_name
+                    )
+                })?;
 
                 let sp = TUI::spinner(&format!("Scaffolding {}...", tmpl.name));
                 let created = template_engine.scaffold(&tmpl, &dir, &HashMap::new())?;
@@ -127,9 +127,9 @@ async fn main() -> Result<()> {
             }
 
             TemplateSubcommand::Show { name } => {
-                let tmpl = template_engine
-                    .find(&name)
-                    .ok_or_else(|| anyhow!("Template '{}' not found. Run: onpkg template list", name))?;
+                let tmpl = template_engine.find(&name).ok_or_else(|| {
+                    anyhow!("Template '{}' not found. Run: onpkg template list", name)
+                })?;
 
                 TUI::label("name", &tmpl.name);
                 TUI::label("category", &tmpl.category);
@@ -154,9 +154,9 @@ async fn main() -> Result<()> {
             }
 
             TemplateSubcommand::Use { name, dir, var } => {
-                let tmpl = template_engine
-                    .find(&name)
-                    .ok_or_else(|| anyhow!("Template '{}' not found. Run: onpkg template list", name))?;
+                let tmpl = template_engine.find(&name).ok_or_else(|| {
+                    anyhow!("Template '{}' not found. Run: onpkg template list", name)
+                })?;
 
                 let target = if let Some(ref d) = dir {
                     std::path::PathBuf::from(d)
@@ -243,7 +243,10 @@ async fn main() -> Result<()> {
                 TUI::info(&format!("{} skills installed:", skills.len()));
                 println!();
                 for s in skills {
-                    TUI::success(&s.name, Some(&format!("v{} \u{00b7} {}", s.version, s.description)));
+                    TUI::success(
+                        &s.name,
+                        Some(&format!("v{} \u{00b7} {}", s.version, s.description)),
+                    );
                 }
             }
 
@@ -311,7 +314,10 @@ async fn main() -> Result<()> {
                 match info {
                     Ok(pkg_info) => {
                         TUI::success(
-                            &format!("{}@{} ({})", pkg_info.name, pkg_info.version, pkg_info.runtime),
+                            &format!(
+                                "{}@{} ({})",
+                                pkg_info.name, pkg_info.version, pkg_info.runtime
+                            ),
                             Some(&pkg_info.description),
                         );
 
@@ -369,8 +375,13 @@ async fn main() -> Result<()> {
                                     &format!("Added {}@{}", pkg_info.name, pkg_info.version),
                                     Some(&format!("to project ({})", pkg_info.runtime)),
                                 );
-                                if let Err(e) = templates::sync_onpkg_project(&project_dir, None, None) {
-                                    TUI::warn(&format!("Failed to auto-sync project manifest: {}", e));
+                                if let Err(e) =
+                                    templates::sync_onpkg_project(&project_dir, None, None)
+                                {
+                                    TUI::warn(&format!(
+                                        "Failed to auto-sync project manifest: {}",
+                                        e
+                                    ));
                                 }
                             }
                             Err(e) => {
@@ -401,14 +412,20 @@ async fn main() -> Result<()> {
                 if !results.templates.is_empty() {
                     TUI::info(&format!("{} templates found:", results.templates.len()));
                     for t in &results.templates {
-                        TUI::success(&t.name, Some(&format!("v{} \u{00b7} {}", t.version, t.description)));
+                        TUI::success(
+                            &t.name,
+                            Some(&format!("v{} \u{00b7} {}", t.version, t.description)),
+                        );
                     }
                     println!();
                 }
                 if !results.skills.is_empty() {
                     TUI::info(&format!("{} skills found:", results.skills.len()));
                     for s in &results.skills {
-                        TUI::success(&s.name, Some(&format!("v{} \u{00b7} {}", s.version, s.description)));
+                        TUI::success(
+                            &s.name,
+                            Some(&format!("v{} \u{00b7} {}", s.version, s.description)),
+                        );
                     }
                     println!();
                 }
@@ -490,13 +507,21 @@ async fn main() -> Result<()> {
 
             match registry.check_health().await {
                 Ok(status) => {
-                    let s = status.get("status").map(|s| s.as_str()).unwrap_or("unknown");
+                    let s = status
+                        .get("status")
+                        .map(|s| s.as_str())
+                        .unwrap_or("unknown");
                     TUI::success("registry", Some(s));
                 }
                 Err(e) => TUI::warn(&format!("registry: {}", e)),
             }
 
-            for (cmd, name) in &[("node", "Node.js"), ("bun", "Bun"), ("python3", "Python 3"), ("cargo", "Cargo")] {
+            for (cmd, name) in &[
+                ("node", "Node.js"),
+                ("bun", "Bun"),
+                ("python3", "Python 3"),
+                ("cargo", "Cargo"),
+            ] {
                 match std::process::Command::new(cmd).arg("--version").output() {
                     Ok(out) => {
                         let ver = String::from_utf8_lossy(&out.stdout)
@@ -566,7 +591,18 @@ async fn main() -> Result<()> {
                 }
             }
 
-            StackSubcommand::Add { name, dir, var, manager } | StackSubcommand::Use { name, dir, var, manager } => {
+            StackSubcommand::Add {
+                name,
+                dir,
+                var,
+                manager,
+            }
+            | StackSubcommand::Use {
+                name,
+                dir,
+                var,
+                manager,
+            } => {
                 let tmpl = find_template_fuzzy(&template_engine, &name)
                     .ok_or_else(|| anyhow!("Stack '{}' not found. Run: onpkg stack list", name))?;
 
@@ -600,7 +636,8 @@ async fn main() -> Result<()> {
                 // Install dependencies online
                 println!();
                 let install_sp = TUI::spinner("Installing dependencies from the internet...");
-                let install_res = templates::install_dependencies_online(&target, manager.as_deref());
+                let install_res =
+                    templates::install_dependencies_online(&target, manager.as_deref());
                 install_sp.finish_and_clear();
                 if let Err(e) = install_res {
                     TUI::warn(&format!("Dependency installation failed: {}", e));
@@ -617,7 +654,7 @@ async fn main() -> Result<()> {
                 } else {
                     TUI::success("AI agent skills created under onpkg_docs/", None);
                     TUI::info("Agents can read onpkg_docs/INDEX.md to get started.");
-                    
+
                     // Generate AI Agent Manifest onpkg.json
                     if let Err(e) = templates::generate_onpkg_manifest(&tmpl, &target, &techs) {
                         TUI::warn(&format!("Failed to generate onpkg.json: {}", e));
@@ -659,14 +696,20 @@ content = """{{
                 );
 
                 std::fs::write(&path, template_toml)?;
-                TUI::success(&format!("Created new stack definition for '{}'", name), Some(&path.to_string_lossy()));
+                TUI::success(
+                    &format!("Created new stack definition for '{}'", name),
+                    Some(&path.to_string_lossy()),
+                );
                 TUI::info("Edit this TOML to customize files, packages, and technologies.");
             }
-        }
+        },
 
         Command::Ai { subcmd } => match subcmd {
             AiSubcommand::Skill { name, prompt } => {
-                TUI::info(&format!("Generating AI skill for '{}' using Gemini...", name));
+                TUI::info(&format!(
+                    "Generating AI skill for '{}' using Gemini...",
+                    name
+                ));
                 let ai = AiGenerator::new()?;
                 let sp = TUI::spinner("Thinking...");
                 let content = ai.generate_skill(&name, prompt.as_deref()).await?;
@@ -679,11 +722,17 @@ content = """{{
                 // Register skill in database
                 skill_manager.install_from_path(&name, &path)?;
 
-                TUI::success(&format!("Generated and installed skill '{}'", name), Some(&path.to_string_lossy()));
+                TUI::success(
+                    &format!("Generated and installed skill '{}'", name),
+                    Some(&path.to_string_lossy()),
+                );
             }
 
             AiSubcommand::Template { name, description } => {
-                TUI::info(&format!("Generating custom template '{}' using Gemini...", name));
+                TUI::info(&format!(
+                    "Generating custom template '{}' using Gemini...",
+                    name
+                ));
                 let ai = AiGenerator::new()?;
                 let sp = TUI::spinner("Designing stack and TOML config...");
                 let content = ai.generate_template(&name, &description).await?;
@@ -693,10 +742,13 @@ content = """{{
                 std::fs::create_dir_all(config.templates_dir())?;
                 std::fs::write(&path, &content)?;
 
-                TUI::success(&format!("Generated and saved template '{}'", name), Some(&path.to_string_lossy()));
+                TUI::success(
+                    &format!("Generated and saved template '{}'", name),
+                    Some(&path.to_string_lossy()),
+                );
                 TUI::info("You can now run: onpkg stack add <name> to use it!");
             }
-        }
+        },
 
         Command::Update => {
             TUI::info("Checking for updates...");
@@ -717,7 +769,10 @@ content = """{{
 
             match res {
                 Ok(_) => {
-                    TUI::success("Project synchronized successfully!", Some("onpkg.json & onpkg_docs/ updated"));
+                    TUI::success(
+                        "Project synchronized successfully!",
+                        Some("onpkg.json & onpkg_docs/ updated"),
+                    );
                 }
                 Err(e) => {
                     TUI::warn(&format!("Sync failed: {}", e));
@@ -729,29 +784,38 @@ content = """{{
     Ok(())
 }
 
-fn find_template_fuzzy(template_engine: &TemplateEngine, name: &str) -> Option<crate::templates::TemplateDefinition> {
+fn find_template_fuzzy(
+    template_engine: &TemplateEngine,
+    name: &str,
+) -> Option<crate::templates::TemplateDefinition> {
     if let Some(t) = template_engine.find(name) {
         return Some(t);
     }
     // Try case-insensitive substring match
     let lower_name = name.to_lowercase();
     let all = template_engine.all_templates();
-    
+
     // First try exact name match ignoring case
     if let Some(t) = all.iter().find(|t| t.name.to_lowercase() == lower_name) {
         return Some(t.clone());
     }
-    
+
     // Then try prefix match
-    if let Some(t) = all.iter().find(|t| t.name.to_lowercase().starts_with(&lower_name)) {
+    if let Some(t) = all
+        .iter()
+        .find(|t| t.name.to_lowercase().starts_with(&lower_name))
+    {
         return Some(t.clone());
     }
-    
+
     // Then try substring match
-    if let Some(t) = all.iter().find(|t| t.name.to_lowercase().contains(&lower_name)) {
+    if let Some(t) = all
+        .iter()
+        .find(|t| t.name.to_lowercase().contains(&lower_name))
+    {
         return Some(t.clone());
     }
-    
+
     None
 }
 

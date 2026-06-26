@@ -49,34 +49,22 @@ impl TUI {
 
     /// Print an info message
     pub fn info(message: &str) {
-        println!(
-            "\x1b[38;2;96;165;250mℹ\x1b[0m {}",
-            message
-        );
+        println!("\x1b[38;2;96;165;250mℹ\x1b[0m {}", message);
     }
 
     /// Print a warning message
     pub fn warn(message: &str) {
-        println!(
-            "\x1b[38;2;245;166;35m⚠\x1b[0m {}",
-            message
-        );
+        println!("\x1b[38;2;245;166;35m⚠\x1b[0m {}", message);
     }
 
     /// Print an error message
     pub fn error(message: &str) {
-        eprintln!(
-            "\x1b[1m\x1b[38;2;255;107;107m✗\x1b[0m {}",
-            message
-        );
+        eprintln!("\x1b[1m\x1b[38;2;255;107;107m✗\x1b[0m {}", message);
     }
 
     /// Print a label with primary color
     pub fn label(text: &str, message: &str) {
-        println!(
-            "\x1b[38;2;0;212;224m{}\x1b[0m  {}",
-            text, message
-        );
+        println!("\x1b[38;2;0;212;224m{}\x1b[0m  {}", text, message);
     }
 
     /// Print the onpkg logo

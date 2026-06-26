@@ -27,7 +27,9 @@ impl SkillManager {
         if let Some(skill) = self.db.get_skill(name)? {
             return Err(anyhow!(
                 "Skill '{}' is already installed (v{}). Use 'onpkg skill remove {}' first.",
-                name, skill.version, name
+                name,
+                skill.version,
+                name
             ));
         }
 
@@ -78,8 +80,8 @@ impl SkillManager {
             return Err(anyhow!("Path {:?} does not exist", path));
         }
 
-        let content = fs::read_to_string(path)
-            .with_context(|| format!("Failed to read {:?}", path))?;
+        let content =
+            fs::read_to_string(path).with_context(|| format!("Failed to read {:?}", path))?;
 
         let dest = self.config.skills_dir().join(format!("{}.md", name));
         fs::create_dir_all(&self.config.skills_dir())?;
@@ -112,7 +114,9 @@ impl SkillManager {
         }
 
         // Assume it's a URL - download it
-        Err(anyhow!("Remote skill installation from URL not yet implemented"))
+        Err(anyhow!(
+            "Remote skill installation from URL not yet implemented"
+        ))
     }
 
     pub fn remove(&self, name: &str) -> Result<()> {
@@ -136,18 +140,28 @@ impl BuiltinSkills {
     pub fn get(name: &str) -> Option<String> {
         match name {
             "onpkg" => Some(include_str!("../SKILL.md").to_string()),
-            "frontend-design" => Some(include_str!("../builtin-skills/frontend-design/SKILL.md").to_string()),
-            "ui-ux-pro-max" => Some(include_str!("../builtin-skills/ui-ux-pro-max/SKILL.md").to_string()),
+            "frontend-design" => {
+                Some(include_str!("../builtin-skills/frontend-design/SKILL.md").to_string())
+            }
+            "ui-ux-pro-max" => {
+                Some(include_str!("../builtin-skills/ui-ux-pro-max/SKILL.md").to_string())
+            }
             "react" => Some(include_str!("../builtin-skills/react.md").to_string()),
-            "tailwind" | "tailwindcss" => Some(include_str!("../builtin-skills/tailwind.md").to_string()),
+            "tailwind" | "tailwindcss" => {
+                Some(include_str!("../builtin-skills/tailwind.md").to_string())
+            }
             "next" | "nextjs" => Some(include_str!("../builtin-skills/next.md").to_string()),
             "hono" => Some(include_str!("../builtin-skills/hono.md").to_string()),
             "fastapi" => Some(include_str!("../builtin-skills/fastapi.md").to_string()),
             "prisma" => Some(include_str!("../builtin-skills/prisma.md").to_string()),
             "express" => Some(include_str!("../builtin-skills/express.md").to_string()),
             "flutter" => Some(include_str!("../builtin-skills/flutter.md").to_string()),
-            "mongodb" | "mongoose" => Some(include_str!("../builtin-skills/mongodb.md").to_string()),
-            "postgres" | "postgresql" => Some(include_str!("../builtin-skills/postgres.md").to_string()),
+            "mongodb" | "mongoose" => {
+                Some(include_str!("../builtin-skills/mongodb.md").to_string())
+            }
+            "postgres" | "postgresql" => {
+                Some(include_str!("../builtin-skills/postgres.md").to_string())
+            }
             "rust" => Some(include_str!("../builtin-skills/rust.md").to_string()),
             "vite" => Some(include_str!("../builtin-skills/vite.md").to_string()),
             _ => None,
@@ -195,12 +209,21 @@ pub fn find_in_common_dirs(name: &str) -> Option<PathBuf> {
     let home = std::env::var("HOME").ok()?;
     let candidates = vec![
         // Crush/Claude skills
-        PathBuf::from(&home).join(".claude/skills").join(name).join("SKILL.md"),
+        PathBuf::from(&home)
+            .join(".claude/skills")
+            .join(name)
+            .join("SKILL.md"),
         PathBuf::from(&home).join(".claude/skills").join(name),
         // BMAD agent skills
-        PathBuf::from(&home).join(".agents/skills").join(name).join("SKILL.md"),
+        PathBuf::from(&home)
+            .join(".agents/skills")
+            .join(name)
+            .join("SKILL.md"),
         PathBuf::from(&home).join(".agents/skills").join(name),
-        PathBuf::from(&home).join(".agents/skills/ui-ux-pro-max/.claude/skills").join(name).join("SKILL.md"),
+        PathBuf::from(&home)
+            .join(".agents/skills/ui-ux-pro-max/.claude/skills")
+            .join(name)
+            .join("SKILL.md"),
     ];
 
     for p in candidates {
