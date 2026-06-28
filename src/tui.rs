@@ -74,9 +74,9 @@ impl TUI {
         let muted = "\x1b[38;2;100;116;139m";
         let reset = "\x1b[0m";
         println!();
-        println!("{bold}{cyan}  ╔═╗╔╗ ╔═╗╦ ╦╔═╗{reset}");
-        println!("{bold}{cyan}  ╠═╣╠╩╗╠═╣║ ║║ ║{reset}");
-        println!("{bold}{cyan}  ╩ ╩╚═╝╩ ╩╚═╝╚═╝{reset}");
+        println!("{bold}{cyan}  ╔═╗╔╗╔╔═╗╦╔═╔═╗{reset}");
+        println!("{bold}{cyan}  ║ ║║║║╠═╝╠╩╗║ ╦{reset}");
+        println!("{bold}{cyan}  ╚═╝╝╚╝╩  ╩ ╩╚═╝{reset}");
         println!(
             "{muted}  onpkg v{} · online package & template manager{reset}",
             env!("CARGO_PKG_VERSION")
