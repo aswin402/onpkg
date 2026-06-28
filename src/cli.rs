@@ -93,6 +93,18 @@ pub enum Command {
         #[arg(short, long)]
         output: Option<String>,
     },
+
+    /// Pack codebase structure and files into a token-budgeted prompt context
+    Pack {
+        /// Target directory
+        dir: Option<String>,
+        /// Token budget limit
+        #[arg(long, default_value = "100000")]
+        max_tokens: usize,
+        /// Save packed context file path
+        #[arg(short, long, default_value = "onpkg-context.md")]
+        output: String,
+    },
 }
 
 // ── Template ──────────────────────────────────────────────────────────────

@@ -11,6 +11,7 @@ pub mod tui;
 pub mod updater;
 pub mod walker;
 pub mod mapper;
+pub mod packer;
 
 use crate::ai::AiGenerator;
 use crate::cli::{
@@ -894,6 +895,21 @@ content = """{{
             } else {
                 println!("{}", content);
             }
+        }
+
+        Command::Pack { dir, max_tokens, output } => {
+            let target = dir.map(std::path::PathBuf::from).unwrap_or_else(|| std::env::current_dir().unwrap());
+            let sp = TUI::spinner("Packing project context...");
+            
+            let result = tokio::task::spawn_blocking(move || {
+                packer::pack_project(&target, max_tokens)
+            }).await??;
+            sp.finish_and_clear();
+            
+            std::fs::write(&output, &result.content)?;
+            TUI::success(&format!("Context packed successfully into {}", output), None);
+            TUI::info(&format!("Tokens: {} | Files embedded: {} | Skipped: {}", 
+                result.token_count, result.file_count, result.skipped_files.len()));
         }
     }
 

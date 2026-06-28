@@ -37,6 +37,7 @@ rusqlite = { version = "0.32", features = ["bundled"] }
 
 # Error handling
 anyhow = "1.0"
+tiktoken-rs = "0.6"
 
 # Progress & terminal UI
 indicatif = "0.18"
