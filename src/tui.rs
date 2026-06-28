@@ -77,7 +77,10 @@ impl TUI {
         println!("{bold}{cyan}  ╔═╗╔╗ ╔═╗╦ ╦╔═╗{reset}");
         println!("{bold}{cyan}  ╠═╣╠╩╗╠═╣║ ║║ ║{reset}");
         println!("{bold}{cyan}  ╩ ╩╚═╝╩ ╩╚═╝╚═╝{reset}");
-        println!("{muted}  onpkg v0.1.0 · online package & template manager{reset}");
+        println!(
+            "{muted}  onpkg v{} · online package & template manager{reset}",
+            env!("CARGO_PKG_VERSION")
+        );
         println!();
     }
 }
