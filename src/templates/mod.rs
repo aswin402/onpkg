@@ -868,41 +868,13 @@ pub fn sync_onpkg_project(
         "json", "yaml", "yml", "md",
     ];
 
-    let walker = WalkDir::new(target_dir).into_iter().filter_entry(|e| {
-        let file_name = e.file_name().to_string_lossy();
-        let relative_path = e.path().strip_prefix(target_dir).unwrap_or(e.path());
-        let rel_str = relative_path.to_string_lossy();
-
-        if e.file_type().is_dir() {
-            let name = file_name.as_ref();
-            name != ".git"
-                && name != ".crush"
-                && name != "node_modules"
-                && name != "target"
-                && name != "build"
-                && name != "dist"
-                && name != ".next"
-                && name != ".svelte-kit"
-                && name != "venv"
-                && name != ".venv"
-                && name != "__pycache__"
-                && name != ".dart_tool"
-                && name != "ios"
-                && name != "android"
-                && name != "onpkg_docs"
-        } else {
-            let name = file_name.as_ref();
-            name != "onpkg.json" && !rel_str.contains("onpkg_docs/")
-        }
-    });
-
-    for entry in walker.filter_map(|e| e.ok()) {
-        let path = entry.path();
-        if path.is_file() {
-            if let Some(ext) = path.extension().and_then(|s| s.to_str()) {
-                if allowed_exts.contains(&ext) {
-                    let rel_path = path.strip_prefix(target_dir).unwrap_or(path);
-                    let rel_str = rel_path.to_string_lossy().to_string();
+    let project_files = crate::walker::get_project_walker(target_dir)?;
+    for path in project_files {
+        if let Some(ext) = path.extension().and_then(|s| s.to_str()) {
+            if allowed_exts.contains(&ext) {
+                let rel_path = path.strip_prefix(target_dir).unwrap_or(&path);
+                let rel_str = rel_path.to_string_lossy().to_string();
+                if rel_str != "onpkg.json" && !rel_str.contains("onpkg_docs/") {
                     files.push(rel_str);
                     extensions.insert(ext.to_string());
                     if let Some(parent) = rel_path.parent() {

@@ -9,6 +9,7 @@ pub mod stacks;
 pub mod templates;
 pub mod tui;
 pub mod updater;
+pub mod walker;
 
 use crate::ai::AiGenerator;
 use crate::cli::{
