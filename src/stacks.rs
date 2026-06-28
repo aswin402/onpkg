@@ -9,6 +9,12 @@ pub struct StackFile {
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
+pub struct StackHook {
+    pub command: String,
+    pub description: Option<String>,
+}
+
+#[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct Stack {
     pub name: String,
     pub runtime: String,
@@ -18,6 +24,8 @@ pub struct Stack {
     #[serde(default)]
     pub transitive_packages: Vec<String>,
     pub files: Vec<StackFile>,
+    #[serde(default)]
+    pub hooks: Vec<StackHook>,
 }
 
 #[path = "templates/builtin/stacks_mod.rs"]

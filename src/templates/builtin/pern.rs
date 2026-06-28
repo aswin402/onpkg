@@ -2,6 +2,7 @@ use crate::stacks::{Stack, StackFile};
 
 pub fn pern() -> Stack {
     Stack {
+        hooks: vec![],
         name: "pern".into(),
         runtime: "bun".into(),
         description: "PERN Stack - Express + React + PostgreSQL + Prisma + TypeScript (Monorepo)".into(),

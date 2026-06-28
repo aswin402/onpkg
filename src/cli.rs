@@ -276,6 +276,9 @@ pub enum StackSubcommand {
         /// Custom package manager (e.g. bun, npm, pnpm, yarn, uv, pip)
         #[arg(short, long)]
         manager: Option<String>,
+        /// Disable running post-scaffold hooks (e.g. git init)
+        #[arg(long)]
+        no_hooks: bool,
     },
     /// Scaffold a stack and install dependencies online (synonym for add)
     Use {
@@ -290,6 +293,9 @@ pub enum StackSubcommand {
         /// Custom package manager (e.g. bun, npm, pnpm, yarn, uv, pip)
         #[arg(short, long)]
         manager: Option<String>,
+        /// Disable running post-scaffold hooks (e.g. git init)
+        #[arg(long)]
+        no_hooks: bool,
     },
     /// Create a custom stack template
     New {

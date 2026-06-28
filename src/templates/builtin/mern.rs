@@ -2,6 +2,7 @@ use crate::stacks::{Stack, StackFile};
 
 pub fn mern() -> Stack {
     Stack {
+        hooks: vec![],
         name: "mern".into(),
         runtime: "bun".into(),
         description: "MERN Stack - Express + React + MongoDB + TypeScript (Monorepo)".into(),

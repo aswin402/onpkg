@@ -2,6 +2,7 @@ use crate::stacks::{Stack, StackFile};
 
 pub fn react_vite() -> Stack {
     Stack {
+        hooks: vec![],
         name: "react-vite".into(),
         runtime: "bun".into(),
         description: "React 19 + Vite 8 + Tailwind 4 + Zustand + TanStack Query + React Router 7 (Complete Modern Template)".into(),
@@ -1471,6 +1472,7 @@ export function RootLayout() {
 
 pub fn react_vite_full() -> Stack {
     Stack {
+        hooks: vec![],
         name: "react-vite-full".into(),
         runtime: "bun".into(),
         description: "React 19 + Vite 8 + Tailwind 4 + Zustand + TanStack Query + React Router 7 (Complete Modern Template)".into(),
@@ -2940,6 +2942,7 @@ export function RootLayout() {
 
 pub fn react_vite_gsap() -> Stack {
     Stack {
+        hooks: vec![],
         name: "react-vite-gsap".into(),
         runtime: "bun".into(),
         description: "React 19 + Vite 8 + Tailwind 4 + GSAP + Framer Motion + Lenis + shadcn/ui + Lordicon (Kinetic Motion Template)".into(),

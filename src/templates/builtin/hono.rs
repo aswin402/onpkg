@@ -2,6 +2,7 @@ use crate::stacks::{Stack, StackFile};
 
 pub fn hono_api() -> Stack {
     Stack {
+        hooks: vec![],
         name: "hono-api".into(),
         runtime: "bun".into(),
         description: "Hono API with Bun and Pino logger".into(),
@@ -60,6 +61,7 @@ export const logger = pino({
 
 pub fn hono_full() -> Stack {
     Stack {
+        hooks: vec![],
         name: "hono-full".into(),
         runtime: "bun".into(),
         description: "Hono + Prisma + Zod + Pino + Better Auth (Prisma Adapter)".into(),

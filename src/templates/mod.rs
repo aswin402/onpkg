@@ -30,6 +30,8 @@ pub struct TemplateDefinition {
     pub variables: Vec<TemplateVariable>,
     #[serde(default)]
     pub technologies: Vec<String>,
+    #[serde(default)]
+    pub hooks: Vec<crate::stacks::StackHook>,
 }
 
 impl TemplateDefinition {
@@ -157,6 +159,7 @@ impl From<crate::stacks::Stack> for TemplateDefinition {
             files,
             variables: vec![],
             technologies,
+            hooks: stack.hooks,
         }
     }
 }
@@ -352,6 +355,7 @@ impl TemplateEngine {
             files,
             variables: vec![],
             technologies: vec![],
+            hooks: vec![],
         };
 
         // Save to ~/.onpkg/templates/
@@ -1677,4 +1681,57 @@ pub fn logo_svg_transparent() -> &'static str {
     <text class="text-subtitle" x="0" y="45">AI AGENT PACKAGE MANAGER</text>
   </g>
 </svg>"##
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_deserialize_template_definition_with_hooks() {
+        let toml_str = r#"
+name = "test-stack"
+category = "test"
+description = "A test stack with hooks"
+version = "1.0.0"
+variables = []
+
+[[files]]
+path = "index.js"
+content = "console.log('hello');"
+
+[[hooks]]
+command = "git init"
+description = "Initialize git repository"
+"#;
+        let tmpl: TemplateDefinition = toml::from_str(toml_str).unwrap();
+        assert_eq!(tmpl.name, "test-stack");
+        assert_eq!(tmpl.hooks.len(), 1);
+        assert_eq!(tmpl.hooks[0].command, "git init");
+        assert_eq!(tmpl.hooks[0].description.as_deref(), Some("Initialize git repository"));
+    }
+
+    #[test]
+    fn test_stack_to_template_definition_conversion_with_hooks() {
+        let stack = crate::stacks::Stack {
+            name: "test-stack".to_string(),
+            runtime: "bun".to_string(),
+            description: "Test".to_string(),
+            packages: vec![],
+            dev_packages: vec![],
+            transitive_packages: vec![],
+            files: vec![],
+            hooks: vec![
+                crate::stacks::StackHook {
+                    command: "echo hello".to_string(),
+                    description: Some("Say hello".to_string()),
+                }
+            ],
+        };
+
+        let tmpl: TemplateDefinition = stack.into();
+        assert_eq!(tmpl.hooks.len(), 1);
+        assert_eq!(tmpl.hooks[0].command, "echo hello");
+        assert_eq!(tmpl.hooks[0].description.as_deref(), Some("Say hello"));
+    }
 }

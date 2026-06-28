@@ -32,6 +32,7 @@ pub fn builtin_templates() -> Vec<TemplateDefinition> {
 
 fn react_vite() -> TemplateDefinition {
     TemplateDefinition {
+        hooks: vec![],
         name: "react-vite".to_string(),
         category: "frontend".to_string(),
         description: "React 19 + Vite + TypeScript starter with ESLint".to_string(),
@@ -179,6 +180,7 @@ export default App"#
 
 fn react_vite_tailwind() -> TemplateDefinition {
     TemplateDefinition {
+        hooks: vec![],
         name: "react-vite-tailwind".to_string(),
         category: "frontend".to_string(),
         description: "React 19 + Vite + TypeScript + Tailwind CSS v4".to_string(),
@@ -333,6 +335,7 @@ export default App"#
 
 fn next_app() -> TemplateDefinition {
     TemplateDefinition {
+        hooks: vec![],
         name: "next-app".to_string(),
         category: "frontend".to_string(),
         description: "Next.js 15 App Router + TypeScript starter".to_string(),
@@ -451,6 +454,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
 
 fn next_app_full() -> TemplateDefinition {
     TemplateDefinition {
+        hooks: vec![],
         name: "next-app-full".to_string(),
         category: "frontend".to_string(),
         description: "Next.js 15 + Tailwind CSS + shadcn/ui + Prisma + Auth.js".to_string(),
@@ -531,6 +535,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
 
 fn hono_api() -> TemplateDefinition {
     TemplateDefinition {
+        hooks: vec![],
         name: "hono-api".to_string(),
         category: "backend".to_string(),
         description: "Hono + TypeScript API server with Zod validation".to_string(),
@@ -606,6 +611,7 @@ export default app"#
 
 fn hono_api_full() -> TemplateDefinition {
     TemplateDefinition {
+        hooks: vec![],
         name: "hono-full".to_string(),
         category: "backend".to_string(),
         description: "Hono + Prisma + PostgreSQL + Auth + Zod".to_string(),
@@ -699,6 +705,7 @@ JWT_SECRET="change-me"
 
 fn express_api() -> TemplateDefinition {
     TemplateDefinition {
+        hooks: vec![],
         name: "express-api".to_string(),
         category: "backend".to_string(),
         description: "Express.js + TypeScript REST API with middleware".to_string(),
@@ -772,6 +779,7 @@ app.listen(port, () => {
 
 fn fastapi() -> TemplateDefinition {
     TemplateDefinition {
+        hooks: vec![],
         name: "fastapi".to_string(),
         category: "backend".to_string(),
         description: "FastAPI + SQLAlchemy + Pydantic + Alembic starter".to_string(),
@@ -850,6 +858,7 @@ DEBUG=true
 
 fn fastapi_full() -> TemplateDefinition {
     TemplateDefinition {
+        hooks: vec![],
         name: ("fastapi-full").to_string(),
         category: "backend".to_string(),
         description: ("FastAPI + SQLAlchemy + Auth + Celery + Docker").to_string(),
@@ -945,6 +954,7 @@ services:
 
 fn mern() -> TemplateDefinition {
     TemplateDefinition {
+        hooks: vec![],
         name: "mern".to_string(),
         category: "fullstack".to_string(),
         description: ("MongoDB + Express + React + Node.js fullstack app").to_string(),
@@ -1054,6 +1064,7 @@ app.listen(process.env.PORT || 5000, () => console.log("Server running"))"#
 
 fn pern() -> TemplateDefinition {
     TemplateDefinition {
+        hooks: vec![],
         name: "pern".to_string(),
         category: "fullstack".to_string(),
         description: "PostgreSQL + Express + React + Node.js fullstack app".to_string(),
@@ -1112,6 +1123,7 @@ fn pern() -> TemplateDefinition {
 
 fn flutter_app() -> TemplateDefinition {
     TemplateDefinition {
+        hooks: vec![],
         name: "flutter-app".to_string(),
         category: "app".to_string(),
         description: "Flutter + Riverpod + GoRouter starter app".to_string(),
@@ -1200,6 +1212,7 @@ class HomePage extends StatelessWidget {
 
 fn static_website() -> TemplateDefinition {
     TemplateDefinition {
+        hooks: vec![],
         name: "static-website".to_string(),
         category: "website".to_string(),
         description: "Minimal HTML5 + CSS3 + JS static website".to_string(),
@@ -1238,6 +1251,7 @@ h1 { font-size: 2.5rem; }
 
 fn minimal_rust_cli() -> TemplateDefinition {
     TemplateDefinition {
+        hooks: vec![],
         name: "rust-cli".to_string(),
         category: "app".to_string(),
         description: "Minimal Rust CLI app with clap and anyhow".to_string(),

@@ -2,6 +2,7 @@ use crate::stacks::{Stack, StackFile};
 
 pub fn next_template() -> Stack {
     Stack {
+        hooks: vec![],
         name: "next-template".into(),
         runtime: "bun".into(),
         description: "Upgraded Next.js 16 + Bun + Tailwind CSS v4 + Prisma 7 + Professional Backend".into(),

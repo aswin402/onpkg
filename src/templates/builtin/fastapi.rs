@@ -2,6 +2,7 @@ use crate::stacks::{Stack, StackFile};
 
 pub fn fastapi() -> Stack {
     Stack {
+        hooks: vec![],
         name: "fastapi".into(),
         runtime: "uv".into(),
         description:

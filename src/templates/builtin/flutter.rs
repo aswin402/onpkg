@@ -14,6 +14,7 @@ pub fn flutter_riverpod(app_name: Option<&str>) -> Stack {
         .unwrap_or_else(|| "Onpkg_flutter-riverpod".to_string());
 
     Stack {
+        hooks: vec![],
         name: if name.is_empty() { "flutter-riverpod".into() } else { format!("flutter-riverpod-{}", name).into() },
         runtime: "flutter".into(),
         description: "Flutter + Riverpod/HooksRiverpod + GoRouter + Dio + Material 3 (Custom Extensions) + Logger + Google Fonts".into(),

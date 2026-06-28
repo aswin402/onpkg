@@ -652,11 +652,13 @@ async fn main() -> Result<()> {
                 dir,
                 var,
                 manager,
+                no_hooks,
             }
             | StackSubcommand::Use {
                 name,
                 dir,
                 var,
+                no_hooks,
                 manager,
             } => {
                 let resolved_name = if let Some(n) = name {
@@ -717,6 +719,34 @@ async fn main() -> Result<()> {
                 install_sp.finish_and_clear();
                 if let Err(e) = install_res {
                     TUI::warn(&format!("Dependency installation failed: {}", e));
+                }
+
+                if !no_hooks && !tmpl.hooks.is_empty() {
+                    println!();
+                    TUI::info("Executing post-scaffold hooks...");
+                    for hook in &tmpl.hooks {
+                        let desc = hook.description.as_deref().unwrap_or(&hook.command);
+                        let hook_sp = TUI::spinner(&format!("Running hook: {}...", desc));
+                        
+                        let hook_res = std::process::Command::new("sh")
+                            .arg("-c")
+                            .arg(&hook.command)
+                            .current_dir(&target)
+                            .output();
+                            
+                        hook_sp.finish_and_clear();
+                        match hook_res {
+                            Ok(output) if output.status.success() => {
+                                TUI::success(&format!("Hook completed: {}", desc), None);
+                            }
+                            Ok(output) => {
+                                TUI::warn(&format!("Hook failed: {} (code: {:?})", desc, output.status.code()));
+                            }
+                            Err(e) => {
+                                TUI::warn(&format!("Failed to spawn hook: {} ({})", desc, e));
+                            }
+                        }
+                    }
                 }
 
                 // Generate agent documentation (onpkg_docs/)
