@@ -25,15 +25,22 @@ pub fn map_project(dir: &Path) -> Result<Vec<FileOutline>> {
     for f in files {
         let rel_path = f.strip_prefix(dir).unwrap_or(&f).to_string_lossy().to_string();
         if let Some(ext) = f.extension().and_then(|s| s.to_str()) {
-            let outline = match ext {
-                "rs" => parse_file(&f, &rel_path, "rust", tree_sitter_rust::LANGUAGE.into(), "(struct_item name: (type_identifier) @name) @kind (enum_item name: (type_identifier) @name) @kind (function_item name: (identifier) @name) @kind (impl_item) @kind (trait_item name: (type_identifier) @name) @kind")?,
-                "py" => parse_file(&f, &rel_path, "python", tree_sitter_python::LANGUAGE.into(), "(class_definition name: (identifier) @name) @kind (function_definition name: (identifier) @name) @kind")?,
-                "ts" | "tsx" => parse_file(&f, &rel_path, "typescript", tree_sitter_typescript::LANGUAGE_TYPESCRIPT.into(), "(class_declaration name: (type_identifier) @name) @kind (function_declaration name: (identifier) @name) @kind (interface_declaration name: (type_identifier) @name) @kind (lexical_declaration (variable_declarator name: (identifier) @name value: (arrow_function))) @kind")?,
-                "js" | "jsx" => parse_file(&f, &rel_path, "javascript", tree_sitter_javascript::LANGUAGE.into(), "(class_declaration name: (identifier) @name) @kind (function_declaration name: (identifier) @name) @kind")?,
+            let outline_res = match ext {
+                "rs" => parse_file(&f, &rel_path, "rust", tree_sitter_rust::LANGUAGE.into(), "(struct_item name: (type_identifier) @name) @kind (enum_item name: (type_identifier) @name) @kind (function_item name: (identifier) @name) @kind (impl_item) @kind (trait_item name: (type_identifier) @name) @kind"),
+                "py" => parse_file(&f, &rel_path, "python", tree_sitter_python::LANGUAGE.into(), "(class_definition name: (identifier) @name) @kind (function_definition name: (identifier) @name) @kind"),
+                "ts" | "tsx" => parse_file(&f, &rel_path, "typescript", tree_sitter_typescript::LANGUAGE_TYPESCRIPT.into(), "(class_declaration name: (type_identifier) @name) @kind (function_declaration name: (identifier) @name) @kind (interface_declaration name: (type_identifier) @name) @kind (lexical_declaration (variable_declarator name: (identifier) @name value: (arrow_function))) @kind"),
+                "js" | "jsx" => parse_file(&f, &rel_path, "javascript", tree_sitter_javascript::LANGUAGE.into(), "(class_declaration name: (identifier) @name) @kind (function_declaration name: (identifier) @name) @kind"),
                 _ => continue,
             };
-            if !outline.symbols.is_empty() {
-                outlines.push(outline);
+            match outline_res {
+                Ok(outline) => {
+                    if !outline.symbols.is_empty() {
+                        outlines.push(outline);
+                    }
+                }
+                Err(e) => {
+                    tracing::warn!("Failed to parse symbols in {}: {}", rel_path, e);
+                }
             }
         }
     }

@@ -882,7 +882,7 @@ content = """{{
             }).await??;
             sp.finish_and_clear();
             
-            let content = if format == "json" {
+            let content = if cli.json || format == "json" {
                 mapper::format_json(&result)?
             } else {
                 mapper::format_markdown(&result)
