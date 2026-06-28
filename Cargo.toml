@@ -5,6 +5,7 @@ edition = "2021"
 description = "Online Package & Template Manager — scaffold projects, manage skills, cache packages"
 authors = ["Aswin"]
 license = "MIT"
+repository = "https://github.com/aswin402/onpkg"
 
 [[bin]]
 name = "onpkg"
