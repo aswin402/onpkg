@@ -77,88 +77,89 @@
 ---
 
 ## 🟡 Phase 2 — "Make It Intelligent" (v0.2.0)
-> Priority: HIGH — AI agent differentiators, competitive moat
+## ✅ Phase 2 — "Make It Intelligent" (v0.2.0) — DONE
+> Completed: 2026-06-28
 
 ### 2.1 `onpkg map` — Code Structure Analysis
-- [ ] Add tree-sitter crates to `Cargo.toml`:
-  - [ ] `tree-sitter`, `tree-sitter-javascript`, `tree-sitter-typescript`
-  - [ ] `tree-sitter-python`, `tree-sitter-rust`
-- [ ] Create `src/mapper.rs` module
-  - [ ] `CodeMap`, `FileOutline`, `Symbol` structs (serializable)
-  - [ ] `detect_language(path)` — extension → language mapping
-  - [ ] `parse_file(path, language)` — extract symbols via tree-sitter
-  - [ ] `map_project(dir)` — walk + parse all supported files
-  - [ ] `format_markdown(map)` — human-readable outline
-  - [ ] `format_json(map)` — machine-readable outline
-- [ ] Tree-sitter queries per language:
-  - [ ] Rust: `fn`, `pub fn`, `struct`, `enum`, `impl`, `trait`, `mod`
-  - [ ] TypeScript/JS: `function`, `class`, `export`, `const`, `interface`
-  - [ ] Python: `def`, `class`, `async def`
-- [ ] Add `Map` command to `src/cli.rs` (dir, format, output flags)
-- [ ] Add `Command::Map` handling in `src/main.rs`
-- [ ] Use `ignore` crate for file walking (see 2.3)
-- [ ] Test: `onpkg map --format json` → valid structured output
+- [x] Add tree-sitter crates to `Cargo.toml`:
+  - [x] `tree-sitter`, `tree-sitter-javascript`, `tree-sitter-typescript`
+  - [x] `tree-sitter-python`, `tree-sitter-rust`
+- [x] Create `src/mapper.rs` module
+  - [x] `CodeMap`, `FileOutline`, `Symbol` structs (serializable)
+  - [x] `detect_language(path)` — extension → language mapping
+  - [x] `parse_file(path, language)` — extract symbols via tree-sitter
+  - [x] `map_project(dir)` — walk + parse all supported files
+  - [x] `format_markdown(map)` — human-readable outline
+  - [x] `format_json(map)` — machine-readable outline
+- [x] Tree-sitter queries per language:
+  - [x] Rust: `fn`, `pub fn`, `struct`, `enum`, `impl`, `trait`, `mod`
+  - [x] TypeScript/JS: `function`, `class`, `export`, `const`, `interface`
+  - [x] Python: `def`, `class`, `async def`
+- [x] Add `Map` command to `src/cli.rs` (dir, format, output flags)
+- [x] Add `Command::Map` handling in `src/main.rs`
+- [x] Use `ignore` crate for file walking (see 2.3)
+- [x] Test: `onpkg map --format json` → valid structured output
 
 ### 2.2 `onpkg pack` — Context Packing
-- [ ] Add `tiktoken-rs` crate to `Cargo.toml`
-- [ ] Create `src/packer.rs` module
-  - [ ] `PackOptions` struct (format, full, max_tokens, exclude)
-  - [ ] `PackResult` struct (content, token_count, file_count)
-  - [ ] `pack_project(dir, opts)` — main packing function
-  - [ ] `count_tokens(text)` — cl100k_base tokenizer
-  - [ ] Directory tree generation
-  - [ ] Full content for small files (<200 lines)
-  - [ ] Outline-only for large files (use mapper)
-  - [ ] Include `onpkg.json` and `AGENTS.md` if present
-  - [ ] `--max-tokens` budget enforcement with truncation
-- [ ] Add `Pack` command to `src/cli.rs`
-- [ ] Add `Command::Pack` handling in `src/main.rs`
-- [ ] Output formats: markdown, xml, json
-- [ ] Add `--exclude` patterns flag
-- [ ] Display token summary at end
-- [ ] Test: `onpkg pack` → creates `onpkg-context.md` with token count
+- [x] Add `tiktoken-rs` crate to `Cargo.toml`
+- [x] Create `src/packer.rs` module
+  - [x] `PackOptions` struct (format, full, max_tokens, exclude)
+  - [x] `PackResult` struct (content, token_count, file_count)
+  - [x] `pack_project(dir, opts)` — main packing function
+  - [x] `count_tokens(text)` — cl100k_base tokenizer
+  - [x] Directory tree generation
+  - [x] Full content for small files (<200 lines)
+  - [x] Outline-only for large files (use mapper)
+  - [x] Include `onpkg.json` and `AGENTS.md` if present
+  - [x] `--max-tokens` budget enforcement with truncation
+- [x] Add `Pack` command to `src/cli.rs`
+- [x] Add `Command::Pack` handling in `src/main.rs`
+- [x] Output formats: markdown, xml, json
+- [x] Add `--exclude` patterns flag
+- [x] Display token summary at end
+- [x] Test: `onpkg pack` → creates `onpkg-context.md` with token count
 
 ### 2.3 Git-Aware File Walking
-- [ ] Add `ignore` crate to `Cargo.toml`
-- [ ] Replace `WalkDir` with `WalkBuilder` in `sync_onpkg_project()`
-  - [ ] Enable `.gitignore` respect
-  - [ ] Enable global gitignore
-  - [ ] Enable `.git/info/exclude`
-  - [ ] Remove hardcoded dir exclusion list
-- [ ] Use `ignore` in `mapper.rs` for `map_project()`
-- [ ] Use `ignore` in `packer.rs` for `pack_project()`
-- [ ] Keep `walkdir` for `add_from_dir` (template ingestion, non-git-aware)
-- [ ] Test: Files in `.gitignore` are excluded from sync/map/pack
+- [x] Add `ignore` crate to `Cargo.toml`
+- [x] Replace `WalkDir` with `WalkBuilder` in `sync_onpkg_project()`
+  - [x] Enable `.gitignore` respect
+  - [x] Enable global gitignore
+  - [x] Enable `.git/info/exclude`
+  - [x] Remove hardcoded dir exclusion list
+- [x] Use `ignore` in `mapper.rs` for `map_project()`
+- [x] Use `ignore` in `packer.rs` for `pack_project()`
+- [x] Keep `walkdir` for `add_from_dir` (template ingestion, non-git-aware)
+- [x] Test: Files in `.gitignore` are excluded from sync/map/pack
 
 ### 2.4 Post-Scaffold Hooks
-- [ ] Add `StackHook` struct to `src/stacks.rs`:
-  - [ ] `command: String`
-  - [ ] `description: String` (optional)
-- [ ] Add `hooks: Vec<StackHook>` to `Stack` struct
-- [ ] Add `hooks: Vec<StackHook>` to `TemplateDefinition` struct
-- [ ] Execute hooks after scaffold in `Command::Stack::Add` handler:
-  - [ ] Sequential execution with `sh -c`
-  - [ ] Spinner per hook
-  - [ ] Success/failure reporting
-  - [ ] Continue on failure (warn, don't abort)
-- [ ] Add default hooks to built-in stacks:
-  - [ ] All stacks: `git init`
-  - [ ] Next/React: `cp .env.example .env` (if example exists)
-- [ ] Support hooks in custom TOML templates
-- [ ] Test: `onpkg stack add react-vite` → git init runs automatically
+- [x] Add `StackHook` struct to `src/stacks.rs`:
+  - [x] `command: String`
+  - [x] `description: String` (optional)
+- [x] Add `hooks: Vec<StackHook>` to `Stack` struct
+- [x] Add `hooks: Vec<StackHook>` to `TemplateDefinition` struct
+- [x] Execute hooks after scaffold in `Command::Stack::Add` handler:
+  - [x] Sequential execution with `sh -c` / `cmd /C`
+  - [x] Spinner per hook
+  - [x] Success/failure reporting
+  - [x] Continue on failure (warn, don't abort)
+- [x] Add default hooks to built-in stacks:
+  - [x] All stacks: `git init`
+  - [x] Next/React: `cp .env.example .env` (if example exists)
+- [x] Support hooks in custom TOML templates
+- [x] Test: `onpkg stack add react-vite` → git init runs automatically
 
 ### 2.5 Improved Doctor Command
-- [ ] Check binary versions, not just existence:
-  - [ ] Node.js version >= 18
-  - [ ] Bun version >= 1.0
-  - [ ] Python version >= 3.10
-  - [ ] Rust/cargo version
-  - [ ] Flutter/dart version
-- [ ] Check for `onpkg.json` in current directory
-- [ ] Check database integrity
-- [ ] Warn about outdated onpkg version (compare with latest release)
-- [ ] Add `--json` output support
-- [ ] Test: `onpkg doctor` shows version numbers and compatibility warnings
+- [x] Check binary versions, not just existence:
+  - [x] Node.js version >= 18
+  - [x] Bun version >= 1.0
+  - [x] Python version >= 3.10
+  - [x] Rust/cargo version
+  - [x] Flutter/dart version
+- [x] Check for `onpkg.json` in current directory
+- [x] Check database integrity
+- [x] Warn about outdated onpkg version (compare with latest release)
+- [x] Add `--json` output support
+- [x] Test: `onpkg doctor` shows version numbers and compatibility warnings
 
 ---
 
