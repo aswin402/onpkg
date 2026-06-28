@@ -10,6 +10,7 @@ pub mod templates;
 pub mod tui;
 pub mod updater;
 pub mod walker;
+pub mod mapper;
 
 use crate::ai::AiGenerator;
 use crate::cli::{
@@ -870,6 +871,28 @@ content = """{{
                 Err(e) => {
                     TUI::warn(&format!("Sync failed: {}", e));
                 }
+            }
+        }
+
+        Command::Map { dir, format, output } => {
+            let target = dir.map(std::path::PathBuf::from).unwrap_or_else(|| std::env::current_dir().unwrap());
+            let sp = TUI::spinner("Mapping project code structure...");
+            let result = tokio::task::spawn_blocking(move || {
+                mapper::map_project(&target)
+            }).await??;
+            sp.finish_and_clear();
+            
+            let content = if format == "json" {
+                mapper::format_json(&result)?
+            } else {
+                mapper::format_markdown(&result)
+            };
+            
+            if let Some(out_path) = output {
+                std::fs::write(&out_path, content)?;
+                TUI::success(&format!("Codebase map written to {}", out_path), None);
+            } else {
+                println!("{}", content);
             }
         }
     }

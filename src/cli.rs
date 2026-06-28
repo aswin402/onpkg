@@ -81,6 +81,18 @@ pub enum Command {
         #[command(subcommand)]
         subcmd: AiSubcommand,
     },
+
+    /// Map project directory structure and extract code symbols
+    Map {
+        /// Target directory
+        dir: Option<String>,
+        /// Output format (markdown, json)
+        #[arg(long, default_value = "markdown")]
+        format: String,
+        /// Save output to file path instead of stdout
+        #[arg(short, long)]
+        output: Option<String>,
+    },
 }
 
 // ── Template ──────────────────────────────────────────────────────────────
