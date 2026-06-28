@@ -10,7 +10,7 @@
 
 <p align="center">
   <a href="https://www.rust-lang.org/"><img src="https://img.shields.io/badge/Rust-1.80%2B-blue?logo=rust" alt="Rust"/></a>
-  <img src="https://img.shields.io/badge/version-0.1.1-green" alt="Version"/>
+  <img src="https://img.shields.io/badge/version-0.1.2-green" alt="Version"/>
   <img src="https://img.shields.io/badge/license-MIT-blue" alt="License"/>
 </p>
 
@@ -88,6 +88,18 @@ onpkg skill install react
 
 # Remove an installed skill
 onpkg skill remove react
+```
+
+### Intelligence & AI Context Commands
+
+```bash
+# Map codebase symbol structure (Rust, Python, TS/JS)
+onpkg map
+onpkg map ./src --format json
+
+# Pack files into a token-budgeted prompt context file
+onpkg pack
+onpkg pack --max-tokens 50000 --output target-context.md
 ```
 
 ### Global Commands

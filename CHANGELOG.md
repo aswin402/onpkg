@@ -5,6 +5,15 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.1.2] - 2026-06-28
+
+### Added
+- **Codebase Symbol Mapping (`onpkg map`)**: Extracts structure and symbol definitions for Rust, Python, JavaScript, and TypeScript files using `tree-sitter`. Supports formatted Markdown and machine-readable JSON outputs.
+- **Smart Context Packing (`onpkg pack`)**: Bundles workspace files into a token-budgeted context file for LLMs using `tiktoken-rs` (cl100k_base). Employs a hybrid packing strategy (substitutes files >= 200 lines with their tree-sitter symbol outlines to conserve token limits).
+- **Git- & AI-Aware Walking**: Walker respects `.gitignore`, global git rules, `.git/info/exclude`, and custom local `.onpkgignore` files, with built-in overrides for heavy folders (`node_modules`, `target`, `.venv`, etc.).
+- **Post-Scaffold Hooks**: Execution of automated hook commands defined in stacks (e.g. `git init`), featuring unix/windows shell portability and `--no-hooks` opt-out.
+- **Improved Doctor Command**: Checks environment versions against semver constraints (Node.js >=18.0.0, Bun >=1.0.0) and runs SQLite database diagnostics (`PRAGMA integrity_check`).
+
 ## [0.1.1] - 2026-06-28
 
 ### Added

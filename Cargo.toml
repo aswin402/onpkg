@@ -1,6 +1,6 @@
 [package]
 name = "onpkg"
-version = "0.1.1"
+version = "0.1.2"
 edition = "2021"
 description = "Online Package & Template Manager — scaffold projects, manage skills, cache packages"
 authors = ["Aswin"]
