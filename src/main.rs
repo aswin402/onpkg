@@ -764,11 +764,19 @@ async fn main() -> Result<()> {
                         let desc = hook.description.as_deref().unwrap_or(&hook.command);
                         let hook_sp = TUI::spinner(&format!("Running hook: {}...", desc));
                         
-                        let hook_res = std::process::Command::new("sh")
-                            .arg("-c")
-                            .arg(&hook.command)
-                            .current_dir(&target)
-                            .output();
+                        let hook_res = if cfg!(target_os = "windows") {
+                            std::process::Command::new("cmd")
+                                .arg("/C")
+                                .arg(&hook.command)
+                                .current_dir(&target)
+                                .output()
+                        } else {
+                            std::process::Command::new("sh")
+                                .arg("-c")
+                                .arg(&hook.command)
+                                .current_dir(&target)
+                                .output()
+                        };
                             
                         hook_sp.finish_and_clear();
                         match hook_res {

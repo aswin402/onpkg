@@ -31,6 +31,8 @@ pub fn pack_project(dir: &Path, max_tokens: usize) -> Result<PackResult> {
     }
     packed_content.push_str("```\n\n");
     
+    let mut total_tokens = bpe.encode_with_special_tokens(&packed_content).len();
+    
     // 2. Pack file contents
     for f in files {
         let rel_path = f.strip_prefix(dir).unwrap_or(&f).to_string_lossy().to_string();
@@ -57,21 +59,20 @@ pub fn pack_project(dir: &Path, max_tokens: usize) -> Result<PackResult> {
             }
         };
         
-        let tokens = bpe.encode_with_special_tokens(&file_representation);
-        let current_tokens = bpe.encode_with_special_tokens(&packed_content);
+        let file_tokens_len = bpe.encode_with_special_tokens(&file_representation).len();
         
-        if current_tokens.len() + tokens.len() < max_tokens {
+        if total_tokens + file_tokens_len < max_tokens {
             packed_content.push_str(&file_representation);
+            total_tokens += file_tokens_len;
             file_count += 1;
         } else {
             skipped_files.push(rel_path);
         }
     }
     
-    let final_tokens = bpe.encode_with_special_tokens(&packed_content).len();
     Ok(PackResult {
         content: packed_content,
-        token_count: final_tokens,
+        token_count: total_tokens,
         file_count,
         skipped_files,
     })
