@@ -158,6 +158,64 @@ fn handle_request(req: &JsonRpcRequest) -> JsonRpcResponse {
                         "type": "object",
                         "properties": {}
                     }
+                },
+                {
+                    "name": "stack_show",
+                    "description": "Show details of a specific project stack template",
+                    "inputSchema": {
+                        "type": "object",
+                        "properties": {
+                            "name": { "type": "string", "description": "Name of the stack template" }
+                        },
+                        "required": ["name"]
+                    }
+                },
+                {
+                    "name": "stack_new",
+                    "description": "Create a new custom stack template definition",
+                    "inputSchema": {
+                        "type": "object",
+                        "properties": {
+                            "name": { "type": "string", "description": "Name of the stack template" },
+                            "category": { "type": "string", "description": "Category for the stack template (default: custom)" }
+                        },
+                        "required": ["name"]
+                    }
+                },
+                {
+                    "name": "stack_diff",
+                    "description": "Compare workspace files against a stack template and optionally apply changes",
+                    "inputSchema": {
+                        "type": "object",
+                        "properties": {
+                            "name": { "type": "string", "description": "Name of the stack template (defaults to current stack)" },
+                            "apply": { "type": "boolean", "description": "Automatically apply template changes to the workspace" }
+                        }
+                    }
+                },
+                {
+                    "name": "ai_template",
+                    "description": "Generate a new template definition TOML using AI",
+                    "inputSchema": {
+                        "type": "object",
+                        "properties": {
+                            "name": { "type": "string", "description": "Template name (e.g. rust-wasm, nextjs-sqlite)" },
+                            "description": { "type": "string", "description": "Description of the stack, architecture, and files needed" }
+                        },
+                        "required": ["name", "description"]
+                    }
+                },
+                {
+                    "name": "ai_skill",
+                    "description": "Generate a new AI agent skill markdown file using AI",
+                    "inputSchema": {
+                        "type": "object",
+                        "properties": {
+                            "name": { "type": "string", "description": "Technology name (e.g. react, tailwind, docker)" },
+                            "prompt": { "type": "string", "description": "Optional prompt or guidance for the skill content" }
+                        },
+                        "required": ["name"]
+                    }
                 }
             ]
         })),
@@ -307,6 +365,101 @@ fn handle_tool_call(name: &str, arguments: Option<&Value>) -> Result<Value> {
         "doctor" => {
             args.push("--json".to_string());
             args.push("doctor".to_string());
+        }
+        "stack_show" => {
+            args.push("stack".to_string());
+            args.push("show".to_string());
+            let mut name_val = None;
+            if let Some(args_map) = arguments.and_then(|a| a.as_object()) {
+                if let Some(n) = args_map.get("name").and_then(|n| n.as_str()) {
+                    name_val = Some(n.to_string());
+                }
+            }
+            if let Some(nv) = name_val {
+                args.push(nv);
+            } else {
+                return Err(anyhow!("Missing required parameter: name"));
+            }
+        }
+        "stack_new" => {
+            args.push("stack".to_string());
+            args.push("new".to_string());
+            let mut name_val = None;
+            if let Some(args_map) = arguments.and_then(|a| a.as_object()) {
+                if let Some(n) = args_map.get("name").and_then(|n| n.as_str()) {
+                    name_val = Some(n.to_string());
+                }
+                if let Some(cat) = args_map.get("category").and_then(|c| c.as_str()) {
+                    args.push("--category".to_string());
+                    args.push(cat.to_string());
+                }
+            }
+            if let Some(nv) = name_val {
+                args.push(nv);
+            } else {
+                return Err(anyhow!("Missing required parameter: name"));
+            }
+        }
+        "stack_diff" => {
+            args.push("stack".to_string());
+            args.push("diff".to_string());
+            if let Some(args_map) = arguments.and_then(|a| a.as_object()) {
+                if let Some(n) = args_map.get("name").and_then(|n| n.as_str()) {
+                    args.push(n.to_string());
+                }
+                if let Some(apply) = args_map.get("apply").and_then(|ap| ap.as_bool()) {
+                    if apply {
+                        args.push("--apply".to_string());
+                    }
+                }
+            }
+        }
+        "ai_template" => {
+            args.push("ai".to_string());
+            args.push("template".to_string());
+            let mut name_val = None;
+            let mut desc_val = None;
+            if let Some(args_map) = arguments.and_then(|a| a.as_object()) {
+                if let Some(n) = args_map.get("name").and_then(|n| n.as_str()) {
+                    name_val = Some(n.to_string());
+                }
+                if let Some(d) = args_map.get("description").and_then(|d| d.as_str()) {
+                    desc_val = Some(d.to_string());
+                }
+            }
+            if let Some(nv) = name_val {
+                args.push(nv);
+            } else {
+                return Err(anyhow!("Missing required parameter: name"));
+            }
+            if let Some(dv) = desc_val {
+                args.push("--description".to_string());
+                args.push(dv);
+            } else {
+                return Err(anyhow!("Missing required parameter: description"));
+            }
+        }
+        "ai_skill" => {
+            args.push("ai".to_string());
+            args.push("skill".to_string());
+            let mut name_val = None;
+            let mut prompt_val = None;
+            if let Some(args_map) = arguments.and_then(|a| a.as_object()) {
+                if let Some(n) = args_map.get("name").and_then(|n| n.as_str()) {
+                    name_val = Some(n.to_string());
+                }
+                if let Some(p) = args_map.get("prompt").and_then(|p| p.as_str()) {
+                    prompt_val = Some(p.to_string());
+                }
+            }
+            if let Some(nv) = name_val {
+                args.push(nv);
+            } else {
+                return Err(anyhow!("Missing required parameter: name"));
+            }
+            if let Some(pv) = prompt_val {
+                args.push(pv);
+            }
         }
         _ => return Err(anyhow!("Unsupported tool: {}", name)),
     }
