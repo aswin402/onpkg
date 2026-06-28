@@ -12,6 +12,10 @@ pub mod updater;
 pub mod walker;
 pub mod mapper;
 pub mod packer;
+pub mod mcp;
+pub mod watch;
+pub mod diff;
+pub mod secrets;
 
 use crate::ai::AiGenerator;
 use crate::cli::{
@@ -852,6 +856,10 @@ content = """{{
                 );
                 TUI::info("Edit this TOML to customize files, packages, and technologies.");
             }
+            StackSubcommand::Diff { name, apply } => {
+                let target = std::env::current_dir()?;
+                diff::diff_template(&target, name.as_deref(), apply)?;
+            }
         },
 
         Command::Ai { subcmd } => match subcmd {
@@ -924,27 +932,31 @@ content = """{{
             }
         }
 
-        Command::Sync { dir } => {
-            TUI::logo();
+        Command::Sync { dir, watch } => {
             let target = if let Some(ref d) = dir {
                 std::path::PathBuf::from(d)
             } else {
                 std::env::current_dir()?
             };
 
-            let sp = TUI::spinner("Syncing project manifest and workflow documentation...");
-            let res = templates::sync_onpkg_project(&target, None, None);
-            sp.finish_and_clear();
+            if watch {
+                watch::watch_project(&target)?;
+            } else {
+                TUI::logo();
+                let sp = TUI::spinner("Syncing project manifest and workflow documentation...");
+                let res = templates::sync_onpkg_project(&target, None, None);
+                sp.finish_and_clear();
 
-            match res {
-                Ok(_) => {
-                    TUI::success(
-                        "Project synchronized successfully!",
-                        Some("onpkg.json & onpkg_docs/ updated"),
-                    );
-                }
-                Err(e) => {
-                    TUI::warn(&format!("Sync failed: {}", e));
+                match res {
+                    Ok(_) => {
+                        TUI::success(
+                            "Project synchronized successfully!",
+                            Some("onpkg.json & onpkg_docs/ updated"),
+                        );
+                    }
+                    Err(e) => {
+                        TUI::warn(&format!("Sync failed: {}", e));
+                    }
                 }
             }
         }
@@ -971,12 +983,12 @@ content = """{{
             }
         }
 
-        Command::Pack { dir, max_tokens, output } => {
+        Command::Pack { dir, max_tokens, output, no_redact } => {
             let target = dir.map(std::path::PathBuf::from).unwrap_or_else(|| std::env::current_dir().unwrap());
             let sp = TUI::spinner("Packing project context...");
             
             let result = tokio::task::spawn_blocking(move || {
-                packer::pack_project(&target, max_tokens)
+                packer::pack_project(&target, max_tokens, no_redact)
             }).await??;
             sp.finish_and_clear();
             
@@ -984,6 +996,10 @@ content = """{{
             TUI::success(&format!("Context packed successfully into {}", output), None);
             TUI::info(&format!("Tokens: {} | Files embedded: {} | Skipped: {}", 
                 result.token_count, result.file_count, result.skipped_files.len()));
+        }
+
+        Command::Serve => {
+            mcp::run_mcp_server()?;
         }
     }
 

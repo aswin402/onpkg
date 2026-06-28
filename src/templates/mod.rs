@@ -1263,6 +1263,41 @@ pub fn sync_onpkg_project(
         serde_json::Value::Object(sources_info.into_iter().collect()),
     );
 
+    let mut workspaces = Vec::new();
+    let cargo_toml_path = target_dir.join("Cargo.toml");
+    if cargo_toml_path.exists() {
+        if let Ok(cargo_content) = fs::read_to_string(&cargo_toml_path) {
+            if cargo_content.contains("[workspace]") {
+                workspaces.push("cargo-workspace".to_string());
+            }
+        }
+    }
+    if target_dir.join("pnpm-workspace.yaml").exists() {
+        workspaces.push("pnpm-workspace".to_string());
+    }
+    let package_json_path = target_dir.join("package.json");
+    if package_json_path.exists() {
+        if let Ok(package_content) = fs::read_to_string(&package_json_path) {
+            if package_content.contains("\"workspaces\"") {
+                workspaces.push("npm-yarn-workspace".to_string());
+            }
+        }
+    }
+    if target_dir.join("apps").is_dir() && target_dir.join("packages").is_dir() {
+        workspaces.push("turborepo-workspace".to_string());
+    }
+    if !workspaces.is_empty() {
+        manifest.insert(
+            "workspaces".to_string(),
+            serde_json::Value::Array(
+                workspaces
+                    .into_iter()
+                    .map(serde_json::Value::String)
+                    .collect(),
+            ),
+        );
+    }
+
     // Write to target_dir/onpkg.json
     if let Ok(json_str) = serde_json::to_string_pretty(&manifest) {
         fs::write(&onpkg_path, json_str)?;

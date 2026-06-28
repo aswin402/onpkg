@@ -11,7 +11,7 @@ pub struct PackResult {
     pub skipped_files: Vec<String>,
 }
 
-pub fn pack_project(dir: &Path, max_tokens: usize) -> Result<PackResult> {
+pub fn pack_project(dir: &Path, max_tokens: usize, no_redact: bool) -> Result<PackResult> {
     let bpe = cl100k_base()?;
     let files = crate::walker::get_project_walker(dir)?;
     
@@ -43,10 +43,21 @@ pub fn pack_project(dir: &Path, max_tokens: usize) -> Result<PackResult> {
                 continue;
             }
         };
-        let lines: Vec<&str> = content.lines().collect();
+
+        let processed_content = if no_redact {
+            content
+        } else {
+            let redact_res = crate::secrets::redact_secrets(&content);
+            for (line_num, desc) in redact_res.warnings {
+                eprintln!("⚠ WARNING: {} in {} on line {}", desc, rel_path, line_num);
+            }
+            redact_res.content
+        };
+
+        let lines: Vec<&str> = processed_content.lines().collect();
         
         let file_representation = if lines.len() < 200 {
-            format!("## File: {}\n```\n{}\n```\n\n", rel_path, content)
+            format!("## File: {}\n```\n{}\n```\n\n", rel_path, processed_content)
         } else {
             // Outlines representation using mapper
             let matching_outline = all_outlines.iter().find(|o| o.file == rel_path);
@@ -101,7 +112,7 @@ mod tests {
         large_content.push_str("pub struct MyLargeStruct {}\n");
         fs::write(&file2, &large_content).unwrap();
 
-        let result = pack_project(path, 10000).unwrap();
+        let result = pack_project(path, 10000, false).unwrap();
         assert_eq!(result.file_count, 2);
         assert!(result.skipped_files.is_empty());
         assert!(result.content.contains("# Project Directory Structure"));
@@ -124,7 +135,7 @@ mod tests {
         let file2 = path.join("file2.rs");
         fs::write(&file2, "fn second() {}\n").unwrap();
 
-        let result = pack_project(path, 35).unwrap();
+        let result = pack_project(path, 35, false).unwrap();
         assert!(result.file_count < 2);
         assert!(!result.skipped_files.is_empty());
     }

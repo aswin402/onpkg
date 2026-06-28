@@ -5,6 +5,15 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.1.3] - 2026-06-28
+
+### Added
+- **Model Context Protocol (MCP) Server Mode (`onpkg serve`)**: Standard stdio JSON-RPC 2.0 protocol implementation exposing all CLI commands (`sync`, `map`, `pack`, `doctor`, `stack_list`, etc.) directly to LLM agents.
+- **Debounced File Watching (`onpkg sync --watch`)**: Watch mode for project directories using `notify` with a 2-second debounce timer to auto-sync files on changes without triggering duplicate sync loops.
+- **Template Diff & Upgrades (`onpkg stack diff`)**: Git-style colorized line-by-line diffing using the `similar` crate comparing local workspace files against original stack templates. Supports a `--apply` option to automatically sync/upgrade.
+- **Monorepo/Workspace Detection**: Automatic discovery of Cargo workspaces, npm/yarn workspaces, pnpm workspaces, and Turborepo monorepos inside project directories, registering them under `onpkg.json`.
+- **Secret Detection & Redaction**: Built-in regex scanning during prompt packing (`onpkg pack`) to detect and redact sensitive tokens (OpenAI keys, GitHub PATs, AWS/Stripe keys, db passwords) to `[REDACTED]`. Includes a `--no-redact` opt-out.
+
 ## [0.1.2] - 2026-06-28
 
 ### Added

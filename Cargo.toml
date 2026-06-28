@@ -1,6 +1,6 @@
 [package]
 name = "onpkg"
-version = "0.1.2"
+version = "0.1.3"
 edition = "2021"
 description = "Online Package & Template Manager — scaffold projects, manage skills, cache packages"
 authors = ["Aswin"]
@@ -56,6 +56,15 @@ glob = "0.3"
 
 # Datetime
 chrono = { version = "0.4", features = ["serde"] }
+
+# File watching
+notify = "6.1.1"
+
+# Diffing
+similar = { version = "2.4", features = ["inline"] }
+
+# Regular expressions
+regex = "1.10"
 
 # Version comparison
 semver = "1.0"

@@ -68,6 +68,9 @@ pub enum Command {
         /// Project directory (defaults to current directory)
         #[arg(short, long)]
         dir: Option<String>,
+        /// Live watch directory and automatically sync on changes
+        #[arg(long, short)]
+        watch: bool,
     },
 
     /// Stack commands — scaffold and install complete stacks online
@@ -104,7 +107,13 @@ pub enum Command {
         /// Save packed context file path
         #[arg(short, long, default_value = "onpkg-context.md")]
         output: String,
+        /// Disable secrets detection and redaction
+        #[arg(long)]
+        no_redact: bool,
     },
+
+    /// Start the standard stdio JSON-RPC Model Context Protocol (MCP) server
+    Serve,
 }
 
 // ── Template ──────────────────────────────────────────────────────────────
@@ -304,6 +313,14 @@ pub enum StackSubcommand {
         /// Category
         #[arg(short, long, default_value = "custom")]
         category: String,
+    },
+    /// Compare workspace files against a stack template
+    Diff {
+        /// Name of the stack template to diff against (defaults to current stack in onpkg.json)
+        name: Option<String>,
+        /// Automatically apply template changes to local workspace
+        #[arg(long)]
+        apply: bool,
     },
 }
 
