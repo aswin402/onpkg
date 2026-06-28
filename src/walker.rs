@@ -23,11 +23,23 @@ pub fn get_project_walker(dir: &Path) -> Result<Vec<PathBuf>> {
         .hidden(true); // Ignore hidden files like .git by default
         
     let mut paths = Vec::new();
+    let exclusions = ["node_modules", "target", "venv", ".venv", "build", "dist", ".next", ".svelte-kit"];
+    
     for result in builder.build() {
         match result {
             Ok(entry) => {
-                if entry.file_type().is_some_and(|ft| ft.is_file()) {
-                    paths.push(entry.path().to_path_buf());
+                if entry.file_type().map_or(false, |ft| ft.is_file()) {
+                    let path = entry.path();
+                    let is_excluded = path.components().any(|c| {
+                        if let std::path::Component::Normal(name) = c {
+                            exclusions.contains(&name.to_string_lossy().as_ref())
+                        } else {
+                            false
+                        }
+                    });
+                    if !is_excluded {
+                        paths.push(path.to_path_buf());
+                    }
                 }
             }
             Err(e) => tracing::warn!("Error walking directory: {}", e),
