@@ -228,8 +228,8 @@
 - [x] Cross-platform builds (Linux, macOS, Windows)
 - [x] Release asset naming convention for `self_update`
 - [ ] Changelog automation with `git-cliff`
-- [ ] Add integration tests for new commands
-- [ ] Add unit tests for mapper, packer, updater modules
+- [x] Add integration tests for new commands
+- [x] Add unit tests for mapper, packer, updater modules
 
 ---
 

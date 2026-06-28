@@ -34,10 +34,33 @@ pub fn diff_template(dir: &Path, stack_name: Option<&str>, apply: bool) -> Resul
         .find(&resolved_stack_name)
         .ok_or_else(|| anyhow!("Stack template '{}' not found", resolved_stack_name))?;
 
+    let env = minijinja::Environment::new();
+    let mut vars = std::collections::HashMap::new();
+    for v in &tmpl.variables {
+        vars.insert(v.name.clone(), v.default.clone());
+    }
+    // Attempt to read the actual project name from onpkg.json to substitute project_name
+    if let Ok(onpkg_content) = fs::read_to_string(dir.join("onpkg.json")) {
+        if let Ok(manifest) = serde_json::from_str::<Value>(&onpkg_content) {
+            if let Some(proj) = manifest.get("project") {
+                if let Some(name) = proj.get("name").and_then(|n| n.as_str()) {
+                    vars.insert("project_name".to_string(), name.to_string());
+                }
+            }
+        }
+    }
+
     let mut has_any_changes = false;
 
     for file in &tmpl.files {
         let target_file_path = dir.join(&file.path);
+        
+        let expected_content = if file.skip_template {
+            file.content.clone()
+        } else {
+            env.render_str(&file.content, &vars).unwrap_or_else(|_| file.content.clone())
+        };
+
         if !target_file_path.exists() {
             println!("\nFile missing: {}", file.path);
             has_any_changes = true;
@@ -45,7 +68,7 @@ pub fn diff_template(dir: &Path, stack_name: Option<&str>, apply: bool) -> Resul
                 if let Some(parent) = target_file_path.parent() {
                     fs::create_dir_all(parent)?;
                 }
-                fs::write(&target_file_path, &file.content)?;
+                fs::write(&target_file_path, &expected_content)?;
                 println!("  -> Re-scaffolded: {}", file.path);
             }
             continue;
@@ -54,7 +77,7 @@ pub fn diff_template(dir: &Path, stack_name: Option<&str>, apply: bool) -> Resul
         let current_content = fs::read_to_string(&target_file_path)?;
         
         // Let's perform line-by-line diff
-        let diff = TextDiff::from_lines(&current_content, &file.content);
+        let diff = TextDiff::from_lines(&current_content, &expected_content);
         let has_changes = diff.iter_all_changes().any(|c| c.tag() != ChangeTag::Equal);
 
         if has_changes {
@@ -77,7 +100,7 @@ pub fn diff_template(dir: &Path, stack_name: Option<&str>, apply: bool) -> Resul
             }
 
             if apply {
-                fs::write(&target_file_path, &file.content)?;
+                fs::write(&target_file_path, &expected_content)?;
                 println!("  -> Applied template changes to: {}", file.path);
             }
         }
