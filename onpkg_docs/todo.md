@@ -242,6 +242,6 @@
 | Phase | Status | Features | Completion |
 |-------|--------|----------|------------|
 | v0.1.0 | ✅ Done | Core scaffolding, skills, sync | 100% |
-| v0.1.1 (Phase 1) | 🔴 Not Started | Update, AGENTS.md, interactive, JSON, cleanup | 0% |
-| v0.2.0 (Phase 2) | 🟡 Not Started | Map, pack, gitignore, hooks, doctor | 0% |
+| v0.1.1 (Phase 1) | ✅ Done | Update, AGENTS.md, interactive, JSON, cleanup | 100% |
+| v0.2.0 (Phase 2) | ✅ Done | Map, pack, gitignore, hooks, doctor | 100% |
 | v0.3.0 (Phase 3) | 🟢 Not Started | MCP, watch, diff, monorepo, secrets, publish | 0% |
