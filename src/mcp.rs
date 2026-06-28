@@ -4,6 +4,7 @@ use serde_json::Value;
 use std::io::{self, BufRead, Write};
 
 #[derive(Deserialize, Debug)]
+#[allow(dead_code)]
 struct JsonRpcRequest {
     jsonrpc: String,
     method: String,
