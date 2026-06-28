@@ -517,8 +517,29 @@ async fn main() -> Result<()> {
 
             diagnostics.push(serde_json::json!({"check": "config", "status": "ok", "detail": "~/.onpkg/config.toml"}));
 
+            // Database integrity check
             match db.count_packages() {
-                Ok(count) => diagnostics.push(serde_json::json!({"check": "database", "status": "ok", "detail": format!("{} packages cached", count)})),
+                Ok(count) => {
+                    // Check PRAGMA integrity_check
+                    let mut is_healthy = true;
+                    if let Ok(conn) = rusqlite::Connection::open(config.db_path()) {
+                        if let Ok(mut stmt) = conn.prepare("PRAGMA integrity_check") {
+                            if let Ok(mut rows) = stmt.query([]) {
+                                if let Ok(Some(row)) = rows.next() {
+                                    let status: String = row.get(0).unwrap_or_default();
+                                    if status != "ok" {
+                                        is_healthy = false;
+                                    }
+                                }
+                            }
+                        }
+                    }
+                    if is_healthy {
+                        diagnostics.push(serde_json::json!({"check": "database", "status": "ok", "detail": format!("{} packages cached (integrity check passed)", count)}));
+                    } else {
+                        diagnostics.push(serde_json::json!({"check": "database", "status": "error", "detail": "database integrity check failed!"}));
+                    }
+                }
                 Err(e) => diagnostics.push(serde_json::json!({"check": "database", "status": "error", "detail": e.to_string()})),
             }
 
@@ -538,20 +559,35 @@ async fn main() -> Result<()> {
                 Err(e) => diagnostics.push(serde_json::json!({"check": "registry", "status": "warn", "detail": e.to_string()})),
             }
 
-            for (cmd, name) in &[
-                ("node", "Node.js"),
-                ("bun", "Bun"),
-                ("python3", "Python 3"),
-                ("cargo", "Cargo"),
+            for (cmd, name, min_req) in &[
+                ("node", "Node.js", Some(semver::VersionReq::parse(">=18.0.0").unwrap())),
+                ("bun", "Bun", Some(semver::VersionReq::parse(">=1.0.0").unwrap())),
+                ("python3", "Python 3", None),
+                ("cargo", "Cargo", None),
             ] {
                 match std::process::Command::new(cmd).arg("--version").output() {
                     Ok(out) => {
-                        let ver = String::from_utf8_lossy(&out.stdout)
+                        let raw_ver = String::from_utf8_lossy(&out.stdout)
                             .lines()
                             .next()
-                            .unwrap_or("unknown")
+                            .unwrap_or("0.0.0")
+                            .trim_start_matches('v')
                             .to_string();
-                        diagnostics.push(serde_json::json!({"check": name, "status": "ok", "detail": ver}));
+                        // Parse semver if requirement exists
+                        let status = if let Some(req) = min_req {
+                            if let Ok(parsed_ver) = semver::Version::parse(&raw_ver.split('-').next().unwrap_or("0.0.0")) {
+                                if req.matches(&parsed_ver) {
+                                    "ok"
+                                } else {
+                                    "warn"
+                                }
+                            } else {
+                                "ok" // If parsing fails (e.g. customized versions), default to ok
+                            }
+                        } else {
+                            "ok"
+                        };
+                        diagnostics.push(serde_json::json!({"check": name, "status": status, "detail": raw_ver}));
                     }
                     Err(_) => diagnostics.push(serde_json::json!({"check": name, "status": "missing", "detail": "not found on PATH"})),
                 }

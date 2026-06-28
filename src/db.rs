@@ -42,7 +42,7 @@ pub struct Database {
 
 impl Database {
     pub fn open(config: &Config) -> Result<Self> {
-        let db_path = config.cache_path().join("onpkg.db");
+        let db_path = config.db_path();
         if let Some(parent) = db_path.parent() {
             std::fs::create_dir_all(parent)?;
         }

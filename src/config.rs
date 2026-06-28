@@ -83,6 +83,10 @@ impl Config {
         PathBuf::from(&self.cache.path)
     }
 
+    pub fn db_path(&self) -> PathBuf {
+        self.cache_path().join("onpkg.db")
+    }
+
     pub fn templates_dir(&self) -> PathBuf {
         let home = home_dir().unwrap_or_else(|| PathBuf::from("/tmp"));
         home.join(".onpkg/templates")
