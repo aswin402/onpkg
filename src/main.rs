@@ -8,6 +8,7 @@ pub mod skill;
 pub mod stacks;
 pub mod templates;
 pub mod tui;
+pub mod updater;
 
 use crate::ai::AiGenerator;
 use crate::cli::{
@@ -23,6 +24,7 @@ use crate::templates::TemplateEngine;
 use crate::tui::TUI;
 use anyhow::{anyhow, Context, Result};
 use clap::{CommandFactory, Parser};
+use dialoguer::FuzzySelect;
 use std::collections::HashMap;
 
 #[tokio::main]
@@ -222,31 +224,40 @@ async fn main() -> Result<()> {
             }
 
             TemplateSubcommand::Publish { name } => {
-                let tmpl_path = config.templates_dir().join(format!("{}.toml", name));
-                if !tmpl_path.exists() {
-                    return Err(anyhow!(
-                        "Template '{}' not found locally. Only custom templates can be published.",
-                        name
-                    ));
-                }
-                match registry.publish_template(&name, &tmpl_path).await {
-                    Ok(_) => TUI::success(&format!("Template '{}' published", name), None),
-                    Err(e) => TUI::warn(&e.to_string()),
-                }
+                TUI::warn(&format!(
+                    "Publishing '{}' to the registry is coming in onpkg v0.3.0.",
+                    name
+                ));
+                TUI::info("For now, share templates via: onpkg template add <name> <git-url>");
+                TUI::info("Track progress: https://github.com/aswin402/onpkg/issues");
             }
         },
 
         Command::Skill { subcmd } => match subcmd {
             SkillSubcommand::List => {
-                TUI::logo();
                 let skills = skill_manager.list()?;
-                TUI::info(&format!("{} skills installed:", skills.len()));
-                println!();
-                for s in skills {
-                    TUI::success(
-                        &s.name,
-                        Some(&format!("v{} \u{00b7} {}", s.version, s.description)),
-                    );
+                if cli.json {
+                    let list: Vec<serde_json::Value> = skills
+                        .iter()
+                        .map(|s| {
+                            serde_json::json!({
+                                "name": s.name,
+                                "version": s.version,
+                                "description": s.description,
+                            })
+                        })
+                        .collect();
+                    println!("{}", serde_json::to_string_pretty(&list).unwrap_or_default());
+                } else {
+                    TUI::logo();
+                    TUI::info(&format!("{} skills installed:", skills.len()));
+                    println!();
+                    for s in skills {
+                        TUI::success(
+                            &s.name,
+                            Some(&format!("v{} \u{00b7} {}", s.version, s.description)),
+                        );
+                    }
                 }
             }
 
@@ -280,28 +291,41 @@ async fn main() -> Result<()> {
             }
 
             SkillSubcommand::Publish { name } => {
-                let skill_path = config.skills_dir().join(format!("{}.md", name));
-                if !skill_path.exists() {
-                    return Err(anyhow!("Skill '{}' not found locally", name));
-                }
-                match registry.publish_skill(&name, &skill_path).await {
-                    Ok(_) => TUI::success(&format!("Skill '{}' published", name), None),
-                    Err(e) => TUI::warn(&e.to_string()),
-                }
+                TUI::warn(&format!(
+                    "Publishing '{}' to the registry is coming in onpkg v0.3.0.",
+                    name
+                ));
+                TUI::info("For now, share skills via: onpkg skill add <name> <path-or-url>");
+                TUI::info("Track progress: https://github.com/aswin402/onpkg/issues");
             }
         },
 
         Command::Pkg { subcmd } => match subcmd {
             PkgSubcommand::List { runtime } => {
-                TUI::logo();
                 let pkgs = db.list_packages(runtime.as_deref())?;
-                TUI::info(&format!("{} packages cached:", pkgs.len()));
-                println!();
-                for pkg in pkgs {
-                    TUI::success(
-                        &format!("{}@{} ({})", pkg.name, pkg.version, pkg.runtime),
-                        Some(&pkg.cache_path),
-                    );
+                if cli.json {
+                    let list: Vec<serde_json::Value> = pkgs
+                        .iter()
+                        .map(|pkg| {
+                            serde_json::json!({
+                                "name": pkg.name,
+                                "version": pkg.version,
+                                "runtime": pkg.runtime,
+                                "cache_path": pkg.cache_path,
+                            })
+                        })
+                        .collect();
+                    println!("{}", serde_json::to_string_pretty(&list).unwrap_or_default());
+                } else {
+                    TUI::logo();
+                    TUI::info(&format!("{} packages cached:", pkgs.len()));
+                    println!();
+                    for pkg in pkgs {
+                        TUI::success(
+                            &format!("{}@{} ({})", pkg.name, pkg.version, pkg.runtime),
+                            Some(&pkg.cache_path),
+                        );
+                    }
                 }
             }
 
@@ -486,34 +510,29 @@ async fn main() -> Result<()> {
         },
 
         Command::Doctor => {
-            TUI::logo();
-            TUI::info("Running diagnostics...");
-            println!();
+            let mut diagnostics = Vec::new();
 
-            TUI::success("config", Some("~/.onpkg/config.toml"));
+            diagnostics.push(serde_json::json!({"check": "config", "status": "ok", "detail": "~/.onpkg/config.toml"}));
 
             match db.count_packages() {
-                Ok(count) => TUI::success("database", Some(&format!("{} packages cached", count))),
-                Err(e) => TUI::error(&format!("database: {}", e)),
+                Ok(count) => diagnostics.push(serde_json::json!({"check": "database", "status": "ok", "detail": format!("{} packages cached", count)})),
+                Err(e) => diagnostics.push(serde_json::json!({"check": "database", "status": "error", "detail": e.to_string()})),
             }
 
             let tmpl_count = template_engine.all_templates().len();
-            TUI::success("templates", Some(&format!("{} available", tmpl_count)));
+            diagnostics.push(serde_json::json!({"check": "templates", "status": "ok", "detail": format!("{} available", tmpl_count)}));
 
             match skill_manager.list() {
-                Ok(skills) => TUI::success("skills", Some(&format!("{} installed", skills.len()))),
-                Err(e) => TUI::error(&format!("skills: {}", e)),
+                Ok(skills) => diagnostics.push(serde_json::json!({"check": "skills", "status": "ok", "detail": format!("{} installed", skills.len())})),
+                Err(e) => diagnostics.push(serde_json::json!({"check": "skills", "status": "error", "detail": e.to_string()})),
             }
 
             match registry.check_health().await {
                 Ok(status) => {
-                    let s = status
-                        .get("status")
-                        .map(|s| s.as_str())
-                        .unwrap_or("unknown");
-                    TUI::success("registry", Some(s));
+                    let s = status.get("status").map(|s| s.as_str()).unwrap_or("unknown");
+                    diagnostics.push(serde_json::json!({"check": "registry", "status": "ok", "detail": s}));
                 }
-                Err(e) => TUI::warn(&format!("registry: {}", e)),
+                Err(e) => diagnostics.push(serde_json::json!({"check": "registry", "status": "warn", "detail": e.to_string()})),
             }
 
             for (cmd, name) in &[
@@ -529,38 +548,72 @@ async fn main() -> Result<()> {
                             .next()
                             .unwrap_or("unknown")
                             .to_string();
-                        TUI::success(name, Some(&ver));
+                        diagnostics.push(serde_json::json!({"check": name, "status": "ok", "detail": ver}));
                     }
-                    Err(_) => TUI::warn(&format!("{} not found on PATH", name)),
+                    Err(_) => diagnostics.push(serde_json::json!({"check": name, "status": "missing", "detail": "not found on PATH"})),
                 }
             }
 
-            println!();
-            TUI::success("Doctor complete", None);
+            if cli.json {
+                println!("{}", serde_json::to_string_pretty(&diagnostics).unwrap_or_default());
+            } else {
+                TUI::logo();
+                TUI::info("Running diagnostics...");
+                println!();
+                for d in &diagnostics {
+                    let check = d.get("check").and_then(|c| c.as_str()).unwrap_or("");
+                    let detail = d.get("detail").and_then(|c| c.as_str()).unwrap_or("");
+                    let status = d.get("status").and_then(|c| c.as_str()).unwrap_or("");
+                    match status {
+                        "ok" => TUI::success(check, Some(detail)),
+                        "warn" | "missing" => TUI::warn(&format!("{}: {}", check, detail)),
+                        _ => TUI::error(&format!("{}: {}", check, detail)),
+                    }
+                }
+                println!();
+                TUI::success("Doctor complete", None);
+            }
         }
 
         Command::Stack { subcmd } => match subcmd {
             StackSubcommand::List { category } => {
-                TUI::logo();
                 let templates = template_engine.all_templates();
-                TUI::info(&format!("{} stacks available:", templates.len()));
-                println!();
-
-                for t in templates {
-                    if let Some(ref cat) = category {
-                        if &t.category != cat {
-                            continue;
+                if cli.json {
+                    let list: Vec<serde_json::Value> = templates
+                        .iter()
+                        .filter(|t| category.as_ref().map_or(true, |cat| &t.category == cat))
+                        .map(|t| {
+                            serde_json::json!({
+                                "name": t.name,
+                                "category": t.category,
+                                "description": t.description,
+                                "version": t.version,
+                                "files_count": t.files.len(),
+                                "technologies": t.get_technologies(),
+                            })
+                        })
+                        .collect();
+                    println!("{}", serde_json::to_string_pretty(&list).unwrap_or_default());
+                } else {
+                    TUI::logo();
+                    TUI::info(&format!("{} stacks available:", templates.len()));
+                    println!();
+                    for t in templates {
+                        if let Some(ref cat) = category {
+                            if &t.category != cat {
+                                continue;
+                            }
                         }
+                        TUI::success(
+                            &t.name,
+                            Some(&format!(
+                                "[{}] {} \u{00b7} {} files",
+                                t.category,
+                                t.description,
+                                t.files.len()
+                            )),
+                        );
                     }
-                    TUI::success(
-                        &t.name,
-                        Some(&format!(
-                            "[{}] {} \u{00b7} {} files",
-                            t.category,
-                            t.description,
-                            t.files.len()
-                        )),
-                    );
                 }
             }
 
@@ -603,8 +656,28 @@ async fn main() -> Result<()> {
                 var,
                 manager,
             } => {
-                let tmpl = find_template_fuzzy(&template_engine, &name)
-                    .ok_or_else(|| anyhow!("Stack '{}' not found. Run: onpkg stack list", name))?;
+                let resolved_name = if let Some(n) = name {
+                    n
+                } else {
+                    let all_templates = template_engine.all_templates();
+                    if all_templates.is_empty() {
+                        return Err(anyhow!("No stacks available."));
+                    }
+                    let items: Vec<String> = all_templates
+                        .iter()
+                        .map(|t| format!("{} \u{2014} [{}] {}", t.name, t.category, t.description))
+                        .collect();
+                    let selection = FuzzySelect::new()
+                        .with_prompt("Select a stack to scaffold")
+                        .items(&items)
+                        .default(0)
+                        .interact()
+                        .context("Stack selection cancelled")?;
+                    all_templates[selection].name.clone()
+                };
+
+                let tmpl = find_template_fuzzy(&template_engine, &resolved_name)
+                    .ok_or_else(|| anyhow!("Stack '{}' not found. Run: onpkg stack list", resolved_name))?;
 
                 let target = if let Some(ref d) = dir {
                     std::path::PathBuf::from(d)
@@ -751,8 +824,27 @@ content = """{{
         },
 
         Command::Update => {
-            TUI::info("Checking for updates...");
-            TUI::warn("Self-update not yet implemented. Use 'cargo install --path .' to rebuild.");
+            TUI::logo();
+            let sp = TUI::spinner("Checking for updates...");
+            let current_ver = env!("CARGO_PKG_VERSION").to_string();
+            let result = tokio::task::spawn_blocking(move || {
+                updater::check_and_update(&current_ver)
+            }).await?;
+            match result {
+                Ok(status) => {
+                    sp.finish_and_clear();
+                    if status.updated() {
+                        TUI::success(&format!("Updated to v{}", status.version()), None);
+                    } else {
+                        TUI::info(&format!("Already on latest version (v{})", env!("CARGO_PKG_VERSION")));
+                    }
+                }
+                Err(e) => {
+                    sp.finish_and_clear();
+                    TUI::warn(&format!("Update check failed: {}", e));
+                    TUI::info("Manual update: cargo install --path . OR download from GitHub releases");
+                }
+            }
         }
 
         Command::Sync { dir } => {

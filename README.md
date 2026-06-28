@@ -10,7 +10,7 @@
 
 <p align="center">
   <a href="https://www.rust-lang.org/"><img src="https://img.shields.io/badge/Rust-1.80%2B-blue?logo=rust" alt="Rust"/></a>
-  <img src="https://img.shields.io/badge/version-0.1.0-green" alt="Version"/>
+  <img src="https://img.shields.io/badge/version-0.1.1-green" alt="Version"/>
   <img src="https://img.shields.io/badge/license-MIT-blue" alt="License"/>
 </p>
 
@@ -18,7 +18,7 @@
   ✨ <b>Vibe coded by Aswin</b> ✨
 </p>
 
-**onpkg** is a high-performance, online-first package and template manager engineered in Rust for developers and AI agents. It scaffolds full premium project architectures instantly, automatically installs dependencies online using the best runtime package manager (`bun`, `npm`, `pnpm`, `yarn`, `uv`, `pip`, `flutter`, or `cargo`), and generates `onpkg_docs/` containing AI agent skills for the project.
+**onpkg** is a high-performance, online-first package and template manager engineered in Rust for developers and AI agents. It scaffolds full premium project architectures instantly, automatically installs dependencies online using the best runtime package manager (`bun`, `npm`, `pnpm`, `yarn`, `uv`, `pip`, `flutter`, or `cargo`), and generates `onpkg_docs/` and `AGENTS.md` containing AI agent skills and project context.
 
 ---
 
@@ -58,7 +58,8 @@ onpkg stack list
 # Show what a stack contains (files, packages, technologies)
 onpkg stack show react-vite-gsap
 
-# Scaffold a stack, install dependencies online, and generate agent docs
+# Scaffold a stack (interactive search picker if stack name is omitted)
+onpkg stack add
 onpkg stack add react-vite-gsap
 onpkg stack add next-template --dir ./my-next-app
 
@@ -92,9 +93,15 @@ onpkg skill remove react
 ### Global Commands
 
 ```bash
-onpkg sync                        # sync files/packages to onpkg.json and update workflow docs
+onpkg sync                        # sync files/packages to onpkg.json, update workflow docs & generate AGENTS.md
 onpkg doctor                      # environment health check
 onpkg update                      # check for updates
+```
+
+### Global Options
+
+```bash
+--json                            # output commands (list, doctor, etc.) in structured JSON format
 ```
 
 ---

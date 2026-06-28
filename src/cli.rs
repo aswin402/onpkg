@@ -13,6 +13,10 @@ pub struct Args {
     #[arg(short = 'V', long = "version")]
     pub version: bool,
 
+    /// Output in JSON format (for AI agent consumption)
+    #[arg(long, global = true)]
+    pub json: bool,
+
     #[command(subcommand)]
     pub command: Option<Command>,
 }
@@ -237,8 +241,8 @@ pub enum StackSubcommand {
     },
     /// Scaffold a stack and install dependencies online
     Add {
-        /// Stack name
-        name: String,
+        /// Stack name (interactive selection if omitted)
+        name: Option<String>,
         /// Target directory (defaults to current dir or project name)
         #[arg(short, long)]
         dir: Option<String>,
@@ -251,8 +255,8 @@ pub enum StackSubcommand {
     },
     /// Scaffold a stack and install dependencies online (synonym for add)
     Use {
-        /// Stack name
-        name: String,
+        /// Stack name (interactive selection if omitted)
+        name: Option<String>,
         /// Target directory (defaults to current dir or project name)
         #[arg(short, long)]
         dir: Option<String>,

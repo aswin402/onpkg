@@ -1,16 +1,246 @@
-# Task Tracker (todo.md) 📋
+# onpkg — Task Tracker (todo.md) 📋
 
-## Setup & Scaffolding
-- [x] Initialize project structure with `onpkg`
-- [x] Configure tailwind/css modules
-- [x] Set up entrypoint and basic router
+> Version: v0.1.0 → v0.3.0 Roadmap
+> Last updated: 2026-06-28
 
-## Active Work Streams
-- [ ] Build core layouts and design system (design.css)
-- [ ] Implement pages and navigation
-- [ ] Integrate database/storage
-- [ ] Add animations and polish transitions
+---
 
-## Verification & Testing
-- [ ] Run lint checks and build validation
-- [ ] Audit responsive layout on mobile/desktop
+## ✅ Completed (v0.1.0)
+- [x] Core CLI with clap derive
+- [x] Stack scaffolding engine (builtin + custom TOML)
+- [x] Skill management (install/remove/list/show)
+- [x] Package caching with SQLite
+- [x] `onpkg sync` — manifest generation
+- [x] `onpkg_docs/` AI skill set generation
+- [x] Multi-runtime detection (bun/npm/uv/cargo/flutter)
+- [x] AI-powered skill/template generation (`onpkg ai`)
+- [x] Registry search/info (read-only)
+- [x] TUI with spinners, colors, and ASCII art
+- [x] Built-in stacks: react-vite, next, fastapi, flutter, hono, mern, pern
+- [x] 14+ built-in technology skills
+
+---
+
+## ✅ Phase 1 — "Make It Complete" (v0.1.1) — DONE
+> Completed: 2026-06-28
+
+### 1.1 Self-Update (`onpkg update`)
+- [x] Add `self_update` crate to `Cargo.toml` (default-features = false, rustls)
+- [x] Create `src/updater.rs` module
+  - [x] `check_and_update(current_version)` function
+  - [x] GitHub Releases backend configuration
+  - [x] Download progress bar integration
+- [x] Replace `Command::Update` match arm in `src/main.rs`
+- [x] Handle error cases (no network, no releases, permission denied)
+- [x] Fix: use `spawn_blocking` to avoid nested tokio runtime panic
+- [x] Test: `onpkg update` shows graceful error or updates
+
+### 1.2 `AGENTS.md` Generation
+- [x] Add `generate_agents_md()` function in `src/templates/mod.rs`
+  - [x] Project name, runtime, package manager, technologies
+  - [x] Build/dev/test commands section
+  - [x] Architecture paths section
+  - [x] User-editable "Agent-Specific Notes" section
+  - [x] Preserve existing user content on re-sync
+- [x] Call from `sync_onpkg_project()` after INDEX.md write
+- [ ] Add `--no-agents-md` flag to `Sync` command _(deferred to v0.2.0)_
+- [ ] Optionally symlink `CLAUDE.md → AGENTS.md` _(deferred to v0.2.0)_
+- [x] Test: `onpkg sync` creates `AGENTS.md` at project root
+
+### 1.3 Interactive Stack Selection
+- [x] Add `dialoguer` crate to `Cargo.toml` (with `fuzzy-select` feature)
+- [x] Make `name` optional in `StackSubcommand::Add` (`src/cli.rs`)
+- [x] Make `name` optional in `StackSubcommand::Use` (`src/cli.rs`)
+- [x] Add fuzzy selector when no name provided (`src/main.rs`)
+  - [x] List all templates with name, category, description
+  - [x] FuzzySelect prompt with default selection
+- [ ] Also add interactive mode for `onpkg skill install` (no args) _(deferred to v0.2.0)_
+- [x] Test: `onpkg stack add` (no args) → shows fuzzy picker
+
+### 1.4 `--json` Structured Output
+- [x] Add `--json` global flag to `Args` struct in `src/cli.rs`
+- [x] Implement JSON output branch for:
+  - [x] `onpkg stack list --json`
+  - [x] `onpkg skill list --json`
+  - [x] `onpkg pkg list --json`
+  - [x] `onpkg doctor --json`
+  - [ ] `onpkg stack show <name> --json` _(deferred to v0.2.0)_
+  - [ ] `onpkg skill show <name> --json` _(deferred to v0.2.0)_
+- [x] Suppress TUI chrome when `--json` is active
+- [x] Test: `onpkg stack list --json | python3 -m json.tool` → valid JSON
+
+### 1.5 Clean Up Dead Registry Publish
+- [x] Replace `TemplateSubcommand::Publish` with roadmap message
+- [x] Replace `SkillSubcommand::Publish` with roadmap message
+- [x] Update help text to explain publishing timeline (v0.3.0)
+
+---
+
+## 🟡 Phase 2 — "Make It Intelligent" (v0.2.0)
+> Priority: HIGH — AI agent differentiators, competitive moat
+
+### 2.1 `onpkg map` — Code Structure Analysis
+- [ ] Add tree-sitter crates to `Cargo.toml`:
+  - [ ] `tree-sitter`, `tree-sitter-javascript`, `tree-sitter-typescript`
+  - [ ] `tree-sitter-python`, `tree-sitter-rust`
+- [ ] Create `src/mapper.rs` module
+  - [ ] `CodeMap`, `FileOutline`, `Symbol` structs (serializable)
+  - [ ] `detect_language(path)` — extension → language mapping
+  - [ ] `parse_file(path, language)` — extract symbols via tree-sitter
+  - [ ] `map_project(dir)` — walk + parse all supported files
+  - [ ] `format_markdown(map)` — human-readable outline
+  - [ ] `format_json(map)` — machine-readable outline
+- [ ] Tree-sitter queries per language:
+  - [ ] Rust: `fn`, `pub fn`, `struct`, `enum`, `impl`, `trait`, `mod`
+  - [ ] TypeScript/JS: `function`, `class`, `export`, `const`, `interface`
+  - [ ] Python: `def`, `class`, `async def`
+- [ ] Add `Map` command to `src/cli.rs` (dir, format, output flags)
+- [ ] Add `Command::Map` handling in `src/main.rs`
+- [ ] Use `ignore` crate for file walking (see 2.3)
+- [ ] Test: `onpkg map --format json` → valid structured output
+
+### 2.2 `onpkg pack` — Context Packing
+- [ ] Add `tiktoken-rs` crate to `Cargo.toml`
+- [ ] Create `src/packer.rs` module
+  - [ ] `PackOptions` struct (format, full, max_tokens, exclude)
+  - [ ] `PackResult` struct (content, token_count, file_count)
+  - [ ] `pack_project(dir, opts)` — main packing function
+  - [ ] `count_tokens(text)` — cl100k_base tokenizer
+  - [ ] Directory tree generation
+  - [ ] Full content for small files (<200 lines)
+  - [ ] Outline-only for large files (use mapper)
+  - [ ] Include `onpkg.json` and `AGENTS.md` if present
+  - [ ] `--max-tokens` budget enforcement with truncation
+- [ ] Add `Pack` command to `src/cli.rs`
+- [ ] Add `Command::Pack` handling in `src/main.rs`
+- [ ] Output formats: markdown, xml, json
+- [ ] Add `--exclude` patterns flag
+- [ ] Display token summary at end
+- [ ] Test: `onpkg pack` → creates `onpkg-context.md` with token count
+
+### 2.3 Git-Aware File Walking
+- [ ] Add `ignore` crate to `Cargo.toml`
+- [ ] Replace `WalkDir` with `WalkBuilder` in `sync_onpkg_project()`
+  - [ ] Enable `.gitignore` respect
+  - [ ] Enable global gitignore
+  - [ ] Enable `.git/info/exclude`
+  - [ ] Remove hardcoded dir exclusion list
+- [ ] Use `ignore` in `mapper.rs` for `map_project()`
+- [ ] Use `ignore` in `packer.rs` for `pack_project()`
+- [ ] Keep `walkdir` for `add_from_dir` (template ingestion, non-git-aware)
+- [ ] Test: Files in `.gitignore` are excluded from sync/map/pack
+
+### 2.4 Post-Scaffold Hooks
+- [ ] Add `StackHook` struct to `src/stacks.rs`:
+  - [ ] `command: String`
+  - [ ] `description: String` (optional)
+- [ ] Add `hooks: Vec<StackHook>` to `Stack` struct
+- [ ] Add `hooks: Vec<StackHook>` to `TemplateDefinition` struct
+- [ ] Execute hooks after scaffold in `Command::Stack::Add` handler:
+  - [ ] Sequential execution with `sh -c`
+  - [ ] Spinner per hook
+  - [ ] Success/failure reporting
+  - [ ] Continue on failure (warn, don't abort)
+- [ ] Add default hooks to built-in stacks:
+  - [ ] All stacks: `git init`
+  - [ ] Next/React: `cp .env.example .env` (if example exists)
+- [ ] Support hooks in custom TOML templates
+- [ ] Test: `onpkg stack add react-vite` → git init runs automatically
+
+### 2.5 Improved Doctor Command
+- [ ] Check binary versions, not just existence:
+  - [ ] Node.js version >= 18
+  - [ ] Bun version >= 1.0
+  - [ ] Python version >= 3.10
+  - [ ] Rust/cargo version
+  - [ ] Flutter/dart version
+- [ ] Check for `onpkg.json` in current directory
+- [ ] Check database integrity
+- [ ] Warn about outdated onpkg version (compare with latest release)
+- [ ] Add `--json` output support
+- [ ] Test: `onpkg doctor` shows version numbers and compatibility warnings
+
+---
+
+## 🟢 Phase 3 — "Make It Indispensable" (v0.3.0)
+> Priority: MEDIUM — Builds competitive moat, ecosystem integration
+
+### 3.1 MCP Server Mode
+- [ ] Add `rmcp` crate to `Cargo.toml`
+- [ ] Create `src/mcp.rs` module
+  - [ ] Define MCP tools: `stack_list`, `stack_add`, `skill_list`, `skill_install`, `sync`, `map`, `pack`, `doctor`
+  - [ ] Tool handlers call existing module functions
+- [ ] Add `Serve` command to `src/cli.rs`
+- [ ] Implement stdio transport (default)
+- [ ] Document MCP configuration for Claude Code / Gemini CLI
+- [ ] Test: Configure as MCP server, call tools from AI agent
+
+### 3.2 Watch Mode (`onpkg sync --watch`)
+- [ ] Add `notify` crate to `Cargo.toml`
+- [ ] Add `--watch` flag to `Sync` command
+- [ ] File watcher with 2-second debounce
+- [ ] Re-run `sync_onpkg_project()` on file changes
+- [ ] Update `AGENTS.md` and `onpkg.json` in real-time
+- [ ] Graceful shutdown on Ctrl+C
+- [ ] Test: Change a file → `onpkg.json` auto-updates
+
+### 3.3 Template Diff/Upgrade
+- [ ] Add `similar` crate to `Cargo.toml`
+- [ ] Add `StackSubcommand::Diff` command
+- [ ] Compare current project files against template definition
+- [ ] Show added/removed/modified files
+- [ ] Optional `--apply` flag to merge template updates
+- [ ] Handle conflict resolution (keep user changes vs take template)
+- [ ] Test: Modify a scaffolded file → `onpkg stack diff` shows changes
+
+### 3.4 Monorepo/Workspace Detection
+- [ ] Detect workspace types in `sync_onpkg_project()`:
+  - [ ] `pnpm-workspace.yaml` → pnpm workspaces
+  - [ ] `package.json` "workspaces" field → npm/yarn
+  - [ ] `Cargo.toml` `[workspace]` → cargo
+  - [ ] `apps/` + `packages/` dirs → turborepo-style
+- [ ] Add `"workspaces"` field to `onpkg.json` output
+- [ ] Per-workspace sync (scan each workspace member)
+- [ ] Test: Run sync in monorepo → workspace members listed
+
+### 3.5 Secret Detection During Pack/Sync
+- [ ] Define secret regex patterns:
+  - [ ] API keys, tokens, passwords
+  - [ ] GitHub PATs, OpenAI keys, Google API keys
+  - [ ] AWS credentials, Stripe keys
+- [ ] Scan file contents before including in pack output
+- [ ] Warn with file:line references
+- [ ] Auto-redact secrets in pack output (replace with `[REDACTED]`)
+- [ ] Optional `--no-redact` flag to skip
+- [ ] Test: File with fake API key → warning + redaction in pack output
+
+### 3.6 Registry Publishing (v0.3.0)
+- [ ] Design registry API contract (REST endpoints)
+- [ ] Implement `publish_template()` in `src/registry.rs`
+- [ ] Implement `publish_skill()` in `src/registry.rs`
+- [ ] Authentication (API key or GitHub OAuth)
+- [ ] Package validation before publish
+- [ ] Version conflict detection
+- [ ] Test: `onpkg template publish mytemplate` → uploads to registry
+
+---
+
+## 🔧 Infrastructure & CI/CD
+- [ ] Set up `cargo-dist` for automated GitHub Releases
+- [ ] GitHub Actions workflow: build → test → release
+- [ ] Cross-platform builds (Linux, macOS, Windows)
+- [ ] Release asset naming convention for `self_update`
+- [ ] Changelog automation with `git-cliff`
+- [ ] Add integration tests for new commands
+- [ ] Add unit tests for mapper, packer, updater modules
+
+---
+
+## 📊 Progress Summary
+
+| Phase | Status | Features | Completion |
+|-------|--------|----------|------------|
+| v0.1.0 | ✅ Done | Core scaffolding, skills, sync | 100% |
+| v0.1.1 (Phase 1) | 🔴 Not Started | Update, AGENTS.md, interactive, JSON, cleanup | 0% |
+| v0.2.0 (Phase 2) | 🟡 Not Started | Map, pack, gitignore, hooks, doctor | 0% |
+| v0.3.0 (Phase 3) | 🟢 Not Started | MCP, watch, diff, monorepo, secrets, publish | 0% |

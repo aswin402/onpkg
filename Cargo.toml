@@ -1,6 +1,6 @@
 [package]
 name = "onpkg"
-version = "0.1.0"
+version = "0.1.1"
 edition = "2021"
 description = "Online Package & Template Manager — scaffold projects, manage skills, cache packages"
 authors = ["Aswin"]
@@ -33,6 +33,7 @@ anyhow = "1.0"
 
 # Progress & terminal UI
 indicatif = "0.18"
+dialoguer = { version = "0.11", features = ["fuzzy-select"] }
 
 # Template engine (Jinja2-compatible, lightweight)
 minijinja = "2.20"
@@ -56,6 +57,9 @@ tracing-subscriber = "0.3"
 
 # Terminal colors
 colored = "3"
+
+# Self-update
+self_update = { version = "0.41", default-features = false, features = ["archive-tar", "archive-zip", "compression-flate2", "rustls"] }
 
 [profile.release]
 opt-level = 3

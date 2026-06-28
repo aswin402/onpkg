@@ -15,12 +15,14 @@
       "chrono",
       "clap",
       "colored",
+      "dialoguer",
       "git2",
       "glob",
       "indicatif",
       "minijinja",
       "reqwest",
       "rusqlite",
+      "self_update",
       "semver",
       "serde",
       "serde_json",
@@ -101,7 +103,8 @@
       "src/templates/builtin/react_vite.rs",
       "src/templates/builtin/stacks_mod.rs",
       "src/templates/mod.rs",
-      "src/tui.rs"
+      "src/tui.rs",
+      "src/updater.rs"
     ]
   }
 }
