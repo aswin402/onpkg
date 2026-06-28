@@ -34,7 +34,13 @@ pub fn pack_project(dir: &Path, max_tokens: usize) -> Result<PackResult> {
     // 2. Pack file contents
     for f in files {
         let rel_path = f.strip_prefix(dir).unwrap_or(&f).to_string_lossy().to_string();
-        let content = std::fs::read_to_string(&f)?;
+        let content = match std::fs::read_to_string(&f) {
+            Ok(c) => c,
+            Err(e) => {
+                tracing::warn!("Failed to read file {}: {}", rel_path, e);
+                continue;
+            }
+        };
         let lines: Vec<&str> = content.lines().collect();
         
         let file_representation = if lines.len() < 200 {
