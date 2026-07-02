@@ -9,6 +9,7 @@ pub struct PackResult {
     pub token_count: usize,
     pub file_count: usize,
     pub skipped_files: Vec<String>,
+    pub warnings: Vec<String>,
 }
 
 pub fn pack_project(dir: &Path, max_tokens: usize, no_redact: bool) -> Result<PackResult> {
@@ -22,6 +23,7 @@ pub fn pack_project(dir: &Path, max_tokens: usize, no_redact: bool) -> Result<Pa
     let mut packed_content = String::new();
     let mut file_count = 0;
     let mut skipped_files = Vec::new();
+    let mut warnings = Vec::new();
     
     // 1. Generate Folder tree structure
     packed_content.push_str("# Project Directory Structure\n```\n");
@@ -49,7 +51,9 @@ pub fn pack_project(dir: &Path, max_tokens: usize, no_redact: bool) -> Result<Pa
         } else {
             let redact_res = crate::secrets::redact_secrets(&content);
             for (line_num, desc) in redact_res.warnings {
-                eprintln!("⚠ WARNING: {} in {} on line {}", desc, rel_path, line_num);
+                let msg = format!("⚠ WARNING: {} in {} on line {}", desc, rel_path, line_num);
+                eprintln!("{}", msg);
+                warnings.push(msg);
             }
             redact_res.content
         };
@@ -86,6 +90,7 @@ pub fn pack_project(dir: &Path, max_tokens: usize, no_redact: bool) -> Result<Pa
         token_count: total_tokens,
         file_count,
         skipped_files,
+        warnings,
     })
 }
 

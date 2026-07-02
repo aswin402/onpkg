@@ -700,8 +700,51 @@ pub fn generate_onpkg_manifest(
     tmpl: &TemplateDefinition,
     target_dir: &std::path::Path,
     technologies: &[String],
+    variables: Option<&std::collections::HashMap<String, String>>,
 ) -> Result<()> {
-    sync_onpkg_project(target_dir, Some(&tmpl.name), Some(technologies))
+    sync_onpkg_project(target_dir, Some(&tmpl.name), Some(technologies), variables)
+}
+
+/// Scaffold stack template and execute all post-scaffold setups (hooks, docs, manifest generation)
+pub fn scaffold_and_setup_stack(
+    template_engine: &TemplateEngine,
+    tmpl: &TemplateDefinition,
+    target: &std::path::Path,
+    extra_vars: &std::collections::HashMap<String, String>,
+    manager: Option<&str>,
+    no_hooks: bool,
+    config: &crate::config::Config,
+) -> Result<Vec<String>> {
+    let created = template_engine.scaffold(tmpl, target, extra_vars)?;
+    
+    // Install dependencies
+    let _ = crate::templates::install_dependencies_online(target, manager);
+    
+    // Post scaffold hooks
+    if !no_hooks && !tmpl.hooks.is_empty() {
+        for hook in &tmpl.hooks {
+            let _desc = hook.description.as_deref().unwrap_or(&hook.command);
+            let _hook_res = if cfg!(target_os = "windows") {
+                std::process::Command::new("cmd")
+                    .arg("/C")
+                    .arg(&hook.command)
+                    .current_dir(target)
+                    .output()
+            } else {
+                std::process::Command::new("sh")
+                    .arg("-c")
+                    .arg(&hook.command)
+                    .current_dir(target)
+                    .output()
+            };
+        }
+    }
+    
+    let techs = tmpl.get_technologies();
+    let _ = crate::templates::generate_agent_docs(&techs, target, config);
+    let _ = crate::templates::generate_onpkg_manifest(tmpl, target, &techs, Some(extra_vars));
+    
+    Ok(created)
 }
 
 /// Generate an AGENTS.md in the project root for AI coding agents.
@@ -795,6 +838,7 @@ pub fn sync_onpkg_project(
     target_dir: &std::path::Path,
     stack_name: Option<&str>,
     technologies: Option<&[String]>,
+    variables: Option<&std::collections::HashMap<String, String>>,
 ) -> Result<()> {
     // 1. Detect project name
     let project_name = target_dir
@@ -1166,6 +1210,36 @@ pub fn sync_onpkg_project(
         "package_manager".to_string(),
         serde_json::Value::String(package_manager),
     );
+
+    // Merge existing variables and new variables
+    let mut vars_map = std::collections::BTreeMap::new();
+    if let Some(existing_vars) = existing_manifest
+        .as_ref()
+        .and_then(|m| m.get("project"))
+        .and_then(|p| p.get("variables"))
+        .and_then(|v| v.as_object())
+    {
+        for (k, val) in existing_vars {
+            if let Some(s) = val.as_str() {
+                vars_map.insert(k.clone(), s.to_string());
+            }
+        }
+    }
+    if let Some(new_vars) = variables {
+        for (k, val) in new_vars {
+            vars_map.insert(k.clone(), val.clone());
+        }
+    }
+    if !vars_map.is_empty() {
+        let vars_json_obj = serde_json::Value::Object(
+            vars_map
+                .into_iter()
+                .map(|(k, v)| (k, serde_json::Value::String(v)))
+                .collect(),
+        );
+        project_info.insert("variables".to_string(), vars_json_obj);
+    }
+
     manifest.insert(
         "project".to_string(),
         serde_json::Value::Object(project_info.into_iter().collect()),

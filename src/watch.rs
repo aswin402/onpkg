@@ -1,5 +1,5 @@
 use anyhow::Result;
-use notify::{Config, RecommendedWatcher, RecursiveMode, Watcher};
+use notify::{Config, RecommendedWatcher, RecursiveMode, Watcher, EventKind};
 use std::path::{Path, PathBuf};
 use std::sync::mpsc::{channel, RecvTimeoutError};
 use std::time::{Duration, Instant};
@@ -24,7 +24,7 @@ pub fn watch_project(dir: &Path) -> Result<()> {
                 // Deadline reached! Run sync.
                 println!("Syncing project manifest...");
                 let path_to_sync = PathBuf::from(dir);
-                if let Err(e) = crate::templates::sync_onpkg_project(&path_to_sync, None, None) {
+                if let Err(e) = crate::templates::sync_onpkg_project(&path_to_sync, None, None, None) {
                     tracing::warn!("Auto-sync failed: {}", e);
                 } else {
                     println!("Sync complete.");
@@ -41,7 +41,12 @@ pub fn watch_project(dir: &Path) -> Result<()> {
 
         match rx.recv_timeout(timeout) {
             Ok(Ok(event)) => {
-                let should_sync = event.paths.iter().any(|path| {
+                let is_write_event = matches!(
+                    event.kind,
+                    EventKind::Create(_) | EventKind::Modify(_) | EventKind::Remove(_) | EventKind::Any
+                );
+                
+                let should_sync = is_write_event && event.paths.iter().any(|path| {
                     !path.components().any(|c| {
                         if let std::path::Component::Normal(name) = c {
                             exclusions.contains(&name.to_string_lossy().as_ref())

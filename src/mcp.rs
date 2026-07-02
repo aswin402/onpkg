@@ -2,6 +2,13 @@ use anyhow::{anyhow, Result};
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 use std::io::{self, BufRead, Write};
+use std::collections::HashMap;
+
+use crate::config::Config;
+use crate::db::Database;
+use crate::registry::Registry;
+use crate::templates::TemplateEngine;
+use crate::skill::SkillManager;
 
 #[derive(Deserialize, Debug)]
 #[allow(dead_code)]
@@ -29,7 +36,13 @@ pub(crate) struct JsonRpcError {
     pub(crate) message: String,
 }
 
-pub fn run_mcp_server() -> Result<()> {
+pub async fn run_mcp_server(
+    config: Config,
+    db: Database,
+    registry: Registry,
+    template_engine: TemplateEngine,
+    skill_manager: SkillManager,
+) -> Result<()> {
     let stdin = io::stdin();
     let stdout = io::stdout();
     let mut stdout_lock = stdout.lock();
@@ -56,7 +69,7 @@ pub fn run_mcp_server() -> Result<()> {
             }
         };
         
-        let response = handle_request(&req);
+        let response = handle_request(&req, &config, &db, &registry, &template_engine, &skill_manager).await;
         serde_json::to_writer(&mut stdout_lock, &response)?;
         stdout_lock.write_all(b"\n")?;
         stdout_lock.flush()?;
@@ -65,14 +78,21 @@ pub fn run_mcp_server() -> Result<()> {
     Ok(())
 }
 
-pub(crate) fn handle_request(req: &JsonRpcRequest) -> JsonRpcResponse {
+pub(crate) async fn handle_request(
+    req: &JsonRpcRequest,
+    config: &Config,
+    db: &Database,
+    registry: &Registry,
+    template_engine: &TemplateEngine,
+    skill_manager: &SkillManager,
+) -> JsonRpcResponse {
     let result = match req.method.as_str() {
         "initialize" => Some(serde_json::json!({
             "protocolVersion": "2024-11-05",
             "capabilities": {
                 "tools": {}
             },
-            "serverInfo": { "name": "onpkg-mcp", "version": "0.1.2" }
+            "serverInfo": { "name": "onpkg-mcp", "version": env!("CARGO_PKG_VERSION") }
         })),
         "tools/list" => Some(serde_json::json!({
             "tools": [
@@ -223,7 +243,7 @@ pub(crate) fn handle_request(req: &JsonRpcRequest) -> JsonRpcResponse {
             if let Some(params) = &req.params {
                 let tool_name = params.get("name").and_then(|n| n.as_str()).unwrap_or_default();
                 let tool_args = params.get("arguments");
-                match handle_tool_call(tool_name, tool_args) {
+                match handle_tool_call(tool_name, tool_args, config, db, registry, template_engine, skill_manager).await {
                     Ok(val) => Some(val),
                     Err(e) => {
                         return JsonRpcResponse {
@@ -263,227 +283,323 @@ pub(crate) fn handle_request(req: &JsonRpcRequest) -> JsonRpcResponse {
     }
 }
 
-fn handle_tool_call(name: &str, arguments: Option<&Value>) -> Result<Value> {
-    let mut args = Vec::new();
-    let current_exe = std::env::current_exe()?;
-
+async fn handle_tool_call(
+    name: &str,
+    arguments: Option<&Value>,
+    config: &Config,
+    db: &Database,
+    registry: &Registry,
+    template_engine: &TemplateEngine,
+    skill_manager: &SkillManager,
+) -> Result<Value> {
     match name {
         "stack_list" => {
-            args.push("--json".to_string());
-            args.push("stack".to_string());
-            args.push("list".to_string());
-            if let Some(args_map) = arguments.and_then(|a| a.as_object()) {
-                if let Some(cat) = args_map.get("category").and_then(|c| c.as_str()) {
-                    args.push("--category".to_string());
-                    args.push(cat.to_string());
+            let category = arguments.and_then(|a| a.get("category")).and_then(|c| c.as_str());
+            let templates = template_engine.all_templates();
+            let mut list = Vec::new();
+            for t in templates {
+                if let Some(cat) = category {
+                    if t.category != cat {
+                        continue;
+                    }
                 }
+                list.push(serde_json::json!({
+                    "name": t.name,
+                    "category": t.category,
+                    "description": t.description,
+                    "files_count": t.files.len(),
+                }));
             }
+            Ok(serde_json::json!({
+                "content": [{ "type": "text", "text": serde_json::to_string_pretty(&list)? }],
+                "isError": false
+            }))
         }
         "stack_add" => {
-            args.push("stack".to_string());
-            args.push("add".to_string());
-            let mut name_val = None;
-            if let Some(args_map) = arguments.and_then(|a| a.as_object()) {
-                if let Some(n) = args_map.get("name").and_then(|n| n.as_str()) {
-                    name_val = Some(n.to_string());
-                }
-                if let Some(dir) = args_map.get("dir").and_then(|d| d.as_str()) {
-                    args.push("--dir".to_string());
-                    args.push(dir.to_string());
-                }
-                if let Some(mgr) = args_map.get("manager").and_then(|m| m.as_str()) {
-                    args.push("--manager".to_string());
-                    args.push(mgr.to_string());
-                }
-                if let Some(no_hooks) = args_map.get("no_hooks").and_then(|nh| nh.as_bool()) {
-                    if no_hooks {
-                        args.push("--no-hooks".to_string());
-                    }
-                }
-            }
-            if let Some(nv) = name_val {
-                args.push(nv);
-            } else {
-                return Err(anyhow!("Missing required parameter: name"));
-            }
+            let stack_name = arguments.and_then(|a| a.get("name")).and_then(|n| n.as_str()).ok_or_else(|| anyhow!("Missing parameter: name"))?;
+            let dir_str = arguments.and_then(|a| a.get("dir")).and_then(|d| d.as_str());
+            let manager = arguments.and_then(|a| a.get("manager")).and_then(|m| m.as_str());
+            let no_hooks = arguments.and_then(|a| a.get("no_hooks")).and_then(|nh| nh.as_bool()).unwrap_or(false);
+            
+            let target = dir_str.map(std::path::PathBuf::from).unwrap_or_else(|| std::env::current_dir().unwrap());
+            let tmpl = template_engine.find(stack_name).ok_or_else(|| anyhow!("Stack '{}' not found", stack_name))?;
+            
+            let created = crate::templates::scaffold_and_setup_stack(template_engine, &tmpl, &target, &HashMap::new(), manager, no_hooks, config)?;
+            
+            Ok(serde_json::json!({
+                "content": [{ "type": "text", "text": format!("Stack '{}' scaffolded successfully. {} files created.", tmpl.name, created.len()) }],
+                "isError": false
+            }))
         }
         "skill_list" => {
-            args.push("--json".to_string());
-            args.push("skill".to_string());
-            args.push("list".to_string());
+            let skills = skill_manager.list()?;
+            let list: Vec<serde_json::Value> = skills
+                .iter()
+                .map(|s| {
+                    serde_json::json!({
+                        "name": s.name,
+                        "version": s.version,
+                        "description": s.description,
+                    })
+                })
+                .collect();
+            Ok(serde_json::json!({
+                "content": [{ "type": "text", "text": serde_json::to_string_pretty(&list)? }],
+                "isError": false
+            }))
         }
         "skill_install" => {
-            args.push("skill".to_string());
-            args.push("install".to_string());
-            let mut name_val = None;
-            if let Some(args_map) = arguments.and_then(|a| a.as_object()) {
-                if let Some(n) = args_map.get("name").and_then(|n| n.as_str()) {
-                    name_val = Some(n.to_string());
-                }
-            }
-            if let Some(nv) = name_val {
-                args.push(nv);
-            } else {
-                return Err(anyhow!("Missing required parameter: name"));
-            }
+            let skill_name = arguments.and_then(|a| a.get("name")).and_then(|n| n.as_str()).ok_or_else(|| anyhow!("Missing parameter: name"))?;
+            skill_manager.install(skill_name)?;
+            Ok(serde_json::json!({
+                "content": [{ "type": "text", "text": format!("Skill '{}' installed successfully.", skill_name) }],
+                "isError": false
+            }))
         }
         "sync" => {
-            args.push("sync".to_string());
-            if let Some(args_map) = arguments.and_then(|a| a.as_object()) {
-                if let Some(dir) = args_map.get("dir").and_then(|d| d.as_str()) {
-                    args.push("--dir".to_string());
-                    args.push(dir.to_string());
-                }
-            }
+            let dir_str = arguments.and_then(|a| a.get("dir")).and_then(|d| d.as_str());
+            let target = dir_str.map(std::path::PathBuf::from).unwrap_or_else(|| std::env::current_dir().unwrap());
+            crate::templates::sync_onpkg_project(&target, None, None, None)?;
+            Ok(serde_json::json!({
+                "content": [{ "type": "text", "text": "Sync completed successfully." }],
+                "isError": false
+            }))
         }
         "map" => {
-            args.push("map".to_string());
-            if let Some(args_map) = arguments.and_then(|a| a.as_object()) {
-                if let Some(dir) = args_map.get("dir").and_then(|d| d.as_str()) {
-                    args.push("--dir".to_string());
-                    args.push(dir.to_string());
-                }
-                if let Some(fmt) = args_map.get("format").and_then(|f| f.as_str()) {
-                    args.push("--format".to_string());
-                    args.push(fmt.to_string());
-                }
-            }
+            let dir_str = arguments.and_then(|a| a.get("dir")).and_then(|d| d.as_str());
+            let target = dir_str.map(std::path::PathBuf::from).unwrap_or_else(|| std::env::current_dir().unwrap());
+            let format = arguments.and_then(|a| a.get("format")).and_then(|f| f.as_str()).unwrap_or("markdown");
+            
+            let map = crate::mapper::map_project(&target)?;
+            let text = if format == "json" {
+                serde_json::to_string_pretty(&map)?
+            } else {
+                crate::mapper::format_markdown(&map)
+            };
+            Ok(serde_json::json!({
+                "content": [{ "type": "text", "text": text }],
+                "isError": false
+            }))
         }
         "pack" => {
-            args.push("pack".to_string());
-            if let Some(args_map) = arguments.and_then(|a| a.as_object()) {
-                if let Some(dir) = args_map.get("dir").and_then(|d| d.as_str()) {
-                    args.push("--dir".to_string());
-                    args.push(dir.to_string());
-                }
-                if let Some(mt) = args_map.get("max_tokens").and_then(|t| t.as_u64()) {
-                    args.push("--max-tokens".to_string());
-                    args.push(mt.to_string());
-                }
-            }
+            let dir_str = arguments.and_then(|a| a.get("dir")).and_then(|d| d.as_str());
+            let target = dir_str.map(std::path::PathBuf::from).unwrap_or_else(|| std::env::current_dir().unwrap());
+            let max_tokens = arguments.and_then(|a| a.get("max_tokens")).and_then(|t| t.as_u64()).unwrap_or(100000) as usize;
+            
+            let result = crate::packer::pack_project(&target, max_tokens, false)?;
+            Ok(serde_json::json!({
+                "content": [
+                    { "type": "text", "text": result.content },
+                    { "type": "text", "text": format!("Token count: {}\nFiles embedded: {}\nSkipped files: {:?}", result.token_count, result.file_count, result.skipped_files) }
+                ],
+                "isError": false
+            }))
         }
         "doctor" => {
-            args.push("--json".to_string());
-            args.push("doctor".to_string());
-        }
-        "stack_show" => {
-            args.push("stack".to_string());
-            args.push("show".to_string());
-            let mut name_val = None;
-            if let Some(args_map) = arguments.and_then(|a| a.as_object()) {
-                if let Some(n) = args_map.get("name").and_then(|n| n.as_str()) {
-                    name_val = Some(n.to_string());
-                }
-            }
-            if let Some(nv) = name_val {
-                args.push(nv);
-            } else {
-                return Err(anyhow!("Missing required parameter: name"));
-            }
-        }
-        "stack_new" => {
-            args.push("stack".to_string());
-            args.push("new".to_string());
-            let mut name_val = None;
-            if let Some(args_map) = arguments.and_then(|a| a.as_object()) {
-                if let Some(n) = args_map.get("name").and_then(|n| n.as_str()) {
-                    name_val = Some(n.to_string());
-                }
-                if let Some(cat) = args_map.get("category").and_then(|c| c.as_str()) {
-                    args.push("--category".to_string());
-                    args.push(cat.to_string());
-                }
-            }
-            if let Some(nv) = name_val {
-                args.push(nv);
-            } else {
-                return Err(anyhow!("Missing required parameter: name"));
-            }
-        }
-        "stack_diff" => {
-            args.push("stack".to_string());
-            args.push("diff".to_string());
-            if let Some(args_map) = arguments.and_then(|a| a.as_object()) {
-                if let Some(n) = args_map.get("name").and_then(|n| n.as_str()) {
-                    args.push(n.to_string());
-                }
-                if let Some(apply) = args_map.get("apply").and_then(|ap| ap.as_bool()) {
-                    if apply {
-                        args.push("--apply".to_string());
+            let mut diagnostics = Vec::new();
+            diagnostics.push(serde_json::json!({"check": "config", "status": "ok", "detail": "~/.onpkg/config.toml"}));
+            
+            if let Ok(count) = db.count_packages() {
+                let mut is_healthy = true;
+                if let Ok(conn) = rusqlite::Connection::open(config.db_path()) {
+                    if let Ok(mut stmt) = conn.prepare("PRAGMA integrity_check") {
+                        if let Ok(mut rows) = stmt.query([]) {
+                            if let Ok(Some(row)) = rows.next() {
+                                let status: String = row.get(0).unwrap_or_default();
+                                if status != "ok" {
+                                    is_healthy = false;
+                                }
+                            }
+                        }
                     }
                 }
+                if is_healthy {
+                    diagnostics.push(serde_json::json!({"check": "database", "status": "ok", "detail": format!("{} packages cached (integrity check passed)", count)}));
+                } else {
+                    diagnostics.push(serde_json::json!({"check": "database", "status": "error", "detail": "database integrity check failed!"}));
+                }
             }
+            
+            let tmpl_count = template_engine.all_templates().len();
+            diagnostics.push(serde_json::json!({"check": "templates", "status": "ok", "detail": format!("{} available", tmpl_count)}));
+            
+            if let Ok(skills) = skill_manager.list() {
+                diagnostics.push(serde_json::json!({"check": "skills", "status": "ok", "detail": format!("{} installed", skills.len())}));
+            }
+            
+            if let Ok(status) = registry.check_health().await {
+                let s = status.get("status").map(|s| s.as_str()).unwrap_or("unknown");
+                diagnostics.push(serde_json::json!({"check": "registry", "status": "ok", "detail": s}));
+            }
+            
+            for (cmd, name, min_req) in &[
+                ("node", "Node.js", Some(semver::VersionReq::parse(">=18.0.0").unwrap())),
+                ("bun", "Bun", Some(semver::VersionReq::parse(">=1.0.0").unwrap())),
+                ("python3", "Python 3", None),
+                ("cargo", "Cargo", None),
+            ] {
+                match std::process::Command::new(cmd).arg("--version").output() {
+                    Ok(out) => {
+                        let raw_ver = String::from_utf8_lossy(&out.stdout)
+                            .lines()
+                            .next()
+                            .unwrap_or("0.0.0")
+                            .trim_start_matches('v')
+                            .to_string();
+                        let status = if let Some(req) = min_req {
+                            if let Ok(parsed_ver) = semver::Version::parse(&raw_ver.split('-').next().unwrap_or("0.0.0")) {
+                                if req.matches(&parsed_ver) { "ok" } else { "warn" }
+                            } else {
+                                "ok"
+                            }
+                        } else {
+                            "ok"
+                        };
+                        diagnostics.push(serde_json::json!({"check": name, "status": status, "detail": raw_ver}));
+                    }
+                    Err(_) => diagnostics.push(serde_json::json!({"check": name, "status": "missing", "detail": "not found on PATH"})),
+                }
+            }
+            
+            Ok(serde_json::json!({
+                "content": [{ "type": "text", "text": serde_json::to_string_pretty(&diagnostics)? }],
+                "isError": false
+            }))
+        }
+        "stack_show" => {
+            let stack_name = arguments.and_then(|a| a.get("name")).and_then(|n| n.as_str()).ok_or_else(|| anyhow!("Missing parameter: name"))?;
+            let tmpl = template_engine.find(stack_name).ok_or_else(|| anyhow!("Stack '{}' not found", stack_name))?;
+            let info = serde_json::json!({
+                "name": tmpl.name,
+                "category": tmpl.category,
+                "description": tmpl.description,
+                "files": tmpl.files.iter().map(|f| &f.path).collect::<Vec<_>>(),
+                "variables": tmpl.variables.iter().map(|v| serde_json::json!({
+                    "name": v.name,
+                    "default": v.default,
+                    "description": v.description,
+                })).collect::<Vec<_>>(),
+            });
+            Ok(serde_json::json!({
+                "content": [{ "type": "text", "text": serde_json::to_string_pretty(&info)? }],
+                "isError": false
+            }))
+        }
+        "stack_new" => {
+            let stack_name = arguments.and_then(|a| a.get("name")).and_then(|n| n.as_str()).ok_or_else(|| anyhow!("Missing parameter: name"))?;
+            let category = arguments.and_then(|a| a.get("category")).and_then(|c| c.as_str()).unwrap_or("custom");
+            let custom_dir = config.templates_dir();
+            std::fs::create_dir_all(&custom_dir)?;
+            let path = custom_dir.join(format!("{}.toml", stack_name));
+            if path.exists() {
+                return Err(anyhow!("Stack definition already exists at {:?}", path));
+            }
+            let template_toml = format!(
+                "name = \"{}\"\ncategory = \"{}\"\ndescription = \"Custom template created with onpkg\"\n\n[[files]]\npath = \"example.txt\"\ncontent = \"Hello from custom stack!\"\n\n[[variables]]\nname = \"project_name\"\ndefault = \"my-project\"\ndescription = \"Name of the project\"\n",
+                stack_name, category
+            );
+            std::fs::write(&path, template_toml)?;
+            Ok(serde_json::json!({
+                "content": [{ "type": "text", "text": format!("Stack definition created at {:?}", path) }],
+                "isError": false
+            }))
+        }
+        "stack_diff" => {
+            let stack_name = arguments.and_then(|a| a.get("name")).and_then(|n| n.as_str());
+            let apply = arguments.and_then(|a| a.get("apply")).and_then(|ap| ap.as_bool()).unwrap_or(false);
+            let target = std::env::current_dir()?;
+            crate::diff::diff_template(&target, stack_name, apply)?;
+            Ok(serde_json::json!({
+                "content": [{ "type": "text", "text": "Template diff comparison complete." }],
+                "isError": false
+            }))
         }
         "ai_template" => {
-            args.push("ai".to_string());
-            args.push("template".to_string());
-            let mut name_val = None;
-            let mut desc_val = None;
-            if let Some(args_map) = arguments.and_then(|a| a.as_object()) {
-                if let Some(n) = args_map.get("name").and_then(|n| n.as_str()) {
-                    name_val = Some(n.to_string());
-                }
-                if let Some(d) = args_map.get("description").and_then(|d| d.as_str()) {
-                    desc_val = Some(d.to_string());
-                }
-            }
-            if let Some(nv) = name_val {
-                args.push(nv);
-            } else {
-                return Err(anyhow!("Missing required parameter: name"));
-            }
-            if let Some(dv) = desc_val {
-                args.push("--description".to_string());
-                args.push(dv);
-            } else {
-                return Err(anyhow!("Missing required parameter: description"));
-            }
+            let stack_name = arguments.and_then(|a| a.get("name")).and_then(|n| n.as_str()).ok_or_else(|| anyhow!("Missing parameter: name"))?;
+            let description = arguments.and_then(|a| a.get("description")).and_then(|d| d.as_str()).ok_or_else(|| anyhow!("Missing parameter: description"))?;
+            let ai = crate::ai::AiGenerator::new()?;
+            let content = ai.generate_template(stack_name, description).await?;
+            let path = config.templates_dir().join(format!("{}.toml", stack_name));
+            std::fs::create_dir_all(config.templates_dir())?;
+            std::fs::write(&path, &content)?;
+            Ok(serde_json::json!({
+                "content": [{ "type": "text", "text": format!("Custom template '{}' generated and saved to {:?}", stack_name, path) }],
+                "isError": false
+            }))
         }
         "ai_skill" => {
-            args.push("ai".to_string());
-            args.push("skill".to_string());
-            let mut name_val = None;
-            let mut prompt_val = None;
-            if let Some(args_map) = arguments.and_then(|a| a.as_object()) {
-                if let Some(n) = args_map.get("name").and_then(|n| n.as_str()) {
-                    name_val = Some(n.to_string());
-                }
-                if let Some(p) = args_map.get("prompt").and_then(|p| p.as_str()) {
-                    prompt_val = Some(p.to_string());
-                }
-            }
-            if let Some(nv) = name_val {
-                args.push(nv);
-            } else {
-                return Err(anyhow!("Missing required parameter: name"));
-            }
-            if let Some(pv) = prompt_val {
-                args.push(pv);
-            }
+            let skill_name = arguments.and_then(|a| a.get("name")).and_then(|n| n.as_str()).ok_or_else(|| anyhow!("Missing parameter: name"))?;
+            let prompt = arguments.and_then(|a| a.get("prompt")).and_then(|p| p.as_str());
+            let ai = crate::ai::AiGenerator::new()?;
+            let content = ai.generate_skill(skill_name, prompt).await?;
+            let path = config.skills_dir().join(format!("{}.md", skill_name));
+            std::fs::create_dir_all(config.skills_dir())?;
+            std::fs::write(&path, &content)?;
+            skill_manager.install_from_path(skill_name, &path)?;
+            Ok(serde_json::json!({
+                "content": [{ "type": "text", "text": format!("Skill '{}' generated and installed to {:?}", skill_name, path) }],
+                "isError": false
+            }))
         }
-        _ => return Err(anyhow!("Unsupported tool: {}", name)),
+        _ => Err(anyhow!("Unsupported tool: {}", name)),
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[tokio::test]
+    async fn test_mcp_initialize() {
+        let req = serde_json::json!({
+            "jsonrpc": "2.0",
+            "method": "initialize",
+            "params": {},
+            "id": 1
+        });
+        
+        let req_struct: JsonRpcRequest = serde_json::from_value(req).unwrap();
+        let config = crate::config::Config::load().unwrap();
+        let db = crate::db::Database::open(&config).unwrap();
+        let registry = crate::registry::Registry::new(config.clone());
+        let template_engine = crate::templates::TemplateEngine::new(config.clone());
+        let skill_manager = crate::skill::SkillManager::new(config.clone(), db.clone());
+
+        let response = handle_request(&req_struct, &config, &db, &registry, &template_engine, &skill_manager).await;
+        
+        assert_eq!(response.jsonrpc, "2.0");
+        assert!(response.result.is_some());
+        assert!(response.error.is_none());
+        assert_eq!(response.id, Some(serde_json::json!(1)));
+        
+        let result_val = response.result.unwrap();
+        assert_eq!(result_val["serverInfo"]["name"], "onpkg-mcp");
     }
 
-    let output = std::process::Command::new(current_exe)
-        .args(&args)
-        .output()?;
+    #[tokio::test]
+    async fn test_mcp_tools_list() {
+        let req = serde_json::json!({
+            "jsonrpc": "2.0",
+            "method": "tools/list",
+            "id": "my-id"
+        });
+        
+        let req_struct: JsonRpcRequest = serde_json::from_value(req).unwrap();
+        let config = crate::config::Config::load().unwrap();
+        let db = crate::db::Database::open(&config).unwrap();
+        let registry = crate::registry::Registry::new(config.clone());
+        let template_engine = crate::templates::TemplateEngine::new(config.clone());
+        let skill_manager = crate::skill::SkillManager::new(config.clone(), db.clone());
 
-    let stdout_str = String::from_utf8_lossy(&output.stdout).to_string();
-    let stderr_str = String::from_utf8_lossy(&output.stderr).to_string();
-    
-    let full_output = if output.status.success() {
-        stdout_str
-    } else {
-        format!("Error (exit code: {:?}):\n{}\n{}", output.status.code(), stderr_str, stdout_str)
-    };
-
-    Ok(serde_json::json!({
-        "content": [
-            {
-                "type": "text",
-                "text": full_output
-            }
-        ],
-        "isError": !output.status.success()
-    }))
+        let response = handle_request(&req_struct, &config, &db, &registry, &template_engine, &skill_manager).await;
+        
+        assert_eq!(response.jsonrpc, "2.0");
+        assert!(response.result.is_some());
+        assert_eq!(response.id, Some(serde_json::json!("my-id")));
+        
+        let result_val = response.result.unwrap();
+        let tools = result_val["tools"].as_array().unwrap();
+        assert!(tools.iter().any(|t| t["name"] == "sync"));
+        assert!(tools.iter().any(|t| t["name"] == "doctor"));
+    }
 }

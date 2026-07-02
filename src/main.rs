@@ -407,7 +407,7 @@ async fn main() -> Result<()> {
                                     Some(&format!("to project ({})", pkg_info.runtime)),
                                 );
                                 if let Err(e) =
-                                    templates::sync_onpkg_project(&project_dir, None, None)
+                                    templates::sync_onpkg_project(&project_dir, None, None, None)
                                 {
                                     TUI::warn(&format!(
                                         "Failed to auto-sync project manifest: {}",
@@ -740,7 +740,15 @@ async fn main() -> Result<()> {
                 }
 
                 let sp = TUI::spinner(&format!("Scaffolding stack {}...", tmpl.name));
-                let created = template_engine.scaffold(&tmpl, &target, &extra_vars)?;
+                let created = templates::scaffold_and_setup_stack(
+                    &template_engine,
+                    &tmpl,
+                    &target,
+                    &extra_vars,
+                    manager.as_deref(),
+                    no_hooks,
+                    &config,
+                )?;
                 sp.finish_and_clear();
 
                 TUI::success(
@@ -749,72 +757,6 @@ async fn main() -> Result<()> {
                 );
                 for f in &created {
                     TUI::label("  created", f);
-                }
-
-                // Install dependencies online
-                println!();
-                let install_sp = TUI::spinner("Installing dependencies from the internet...");
-                let install_res =
-                    templates::install_dependencies_online(&target, manager.as_deref());
-                install_sp.finish_and_clear();
-                if let Err(e) = install_res {
-                    TUI::warn(&format!("Dependency installation failed: {}", e));
-                }
-
-                if !no_hooks && !tmpl.hooks.is_empty() {
-                    println!();
-                    TUI::info("Executing post-scaffold hooks...");
-                    for hook in &tmpl.hooks {
-                        let desc = hook.description.as_deref().unwrap_or(&hook.command);
-                        let hook_sp = TUI::spinner(&format!("Running hook: {}...", desc));
-                        
-                        let hook_res = if cfg!(target_os = "windows") {
-                            std::process::Command::new("cmd")
-                                .arg("/C")
-                                .arg(&hook.command)
-                                .current_dir(&target)
-                                .output()
-                        } else {
-                            std::process::Command::new("sh")
-                                .arg("-c")
-                                .arg(&hook.command)
-                                .current_dir(&target)
-                                .output()
-                        };
-                            
-                        hook_sp.finish_and_clear();
-                        match hook_res {
-                            Ok(output) if output.status.success() => {
-                                TUI::success(&format!("Hook completed: {}", desc), None);
-                            }
-                            Ok(output) => {
-                                TUI::warn(&format!("Hook failed: {} (code: {:?})", desc, output.status.code()));
-                            }
-                            Err(e) => {
-                                TUI::warn(&format!("Failed to spawn hook: {} ({})", desc, e));
-                            }
-                        }
-                    }
-                }
-
-                // Generate agent documentation (onpkg_docs/)
-                println!();
-                let docs_sp = TUI::spinner("Generating AI agent skills in onpkg_docs/...");
-                let techs = tmpl.get_technologies();
-                let docs_res = templates::generate_agent_docs(&techs, &target, &config);
-                docs_sp.finish_and_clear();
-                if let Err(e) = docs_res {
-                    TUI::warn(&format!("Failed to generate onpkg_docs/: {}", e));
-                } else {
-                    TUI::success("AI agent skills created under onpkg_docs/", None);
-                    TUI::info("Agents can read onpkg_docs/INDEX.md to get started.");
-
-                    // Generate AI Agent Manifest onpkg.json
-                    if let Err(e) = templates::generate_onpkg_manifest(&tmpl, &target, &techs) {
-                        TUI::warn(&format!("Failed to generate onpkg.json: {}", e));
-                    } else {
-                        TUI::success("AI agent manifest created in onpkg.json", None);
-                    }
                 }
             }
 
@@ -944,7 +886,7 @@ content = """{{
             } else {
                 TUI::logo();
                 let sp = TUI::spinner("Syncing project manifest and workflow documentation...");
-                let res = templates::sync_onpkg_project(&target, None, None);
+                let res = templates::sync_onpkg_project(&target, None, None, None);
                 sp.finish_and_clear();
 
                 match res {
@@ -999,7 +941,8 @@ content = """{{
         }
 
         Command::Serve => {
-            mcp::run_mcp_server()?;
+            TUI::set_mcp_mode(true);
+            mcp::run_mcp_server(config, db, registry, template_engine, skill_manager).await?;
         }
     }
 
