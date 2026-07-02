@@ -176,7 +176,7 @@ pub enum SkillSubcommand {
     /// Install a skill from the registry or local file
     Install {
         /// Skill name or path to SKILL.md
-        name: String,
+        name: Option<String>,
     },
     /// Show info about an installed skill
     Show {

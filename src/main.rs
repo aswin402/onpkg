@@ -277,11 +277,28 @@ async fn main() -> Result<()> {
             }
 
             SkillSubcommand::Install { name } => {
-                let sp = TUI::spinner(&format!("Installing skill '{}'...", name));
-                skill_manager.install(&name)?;
+                let resolved_name = if let Some(n) = name {
+                    n
+                } else {
+                    let all_builtins = crate::skill::BuiltinSkills::all_skills();
+                    let items: Vec<String> = all_builtins
+                        .iter()
+                        .map(|(name, desc)| format!("{} \u{2014} {}", name, desc))
+                        .collect();
+                    let selection = FuzzySelect::new()
+                        .with_prompt("Select a skill to install")
+                        .items(&items)
+                        .default(0)
+                        .interact()
+                        .context("Skill selection cancelled")?;
+                    all_builtins[selection].0.to_string()
+                };
+
+                let sp = TUI::spinner(&format!("Installing skill '{}'...", resolved_name));
+                skill_manager.install(&resolved_name)?;
                 sp.finish_and_clear();
-                TUI::success(&format!("Skill '{}' installed", name), None);
-                TUI::info(&format!("Path: ~/.onpkg/skills/{}.md", name));
+                TUI::success(&format!("Skill '{}' installed", resolved_name), None);
+                TUI::info(&format!("Path: ~/.onpkg/skills/{}.md", resolved_name));
             }
 
             SkillSubcommand::Show { name } => {

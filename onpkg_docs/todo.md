@@ -54,7 +54,7 @@
 - [x] Add fuzzy selector when no name provided (`src/main.rs`)
   - [x] List all templates with name, category, description
   - [x] FuzzySelect prompt with default selection
-- [ ] Also add interactive mode for `onpkg skill install` (no args) _(deferred to v0.2.0)_
+- [x] Also add interactive mode for `onpkg skill install` (no args)
 - [x] Test: `onpkg stack add` (no args) → shows fuzzy picker
 
 ### 1.4 `--json` Structured Output

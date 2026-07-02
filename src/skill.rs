@@ -137,6 +137,26 @@ impl SkillManager {
 pub struct BuiltinSkills;
 
 impl BuiltinSkills {
+    pub fn all_skills() -> Vec<(&'static str, &'static str)> {
+        vec![
+            ("onpkg", "Standard Online Package & Template Manager skill"),
+            ("frontend-design", "Advanced UI styling, aesthetics, animations, and typography guidance"),
+            ("ui-ux-pro-max", "Premium UX design flow, user psychology, conversion rate optimization patterns"),
+            ("react", "React component patterns, lifecycle, hooks, and performance"),
+            ("tailwind", "Tailwind CSS styling tokens, utilities, and configuration"),
+            ("next", "Next.js routing, server components, API routes, SSR, and SSG"),
+            ("hono", "Hono web framework, middleware, and edge runtime deployment"),
+            ("fastapi", "FastAPI endpoints, dependency injection, schemas, and async handlers"),
+            ("prisma", "Prisma ORM schema design, migrations, client queries, and relations"),
+            ("express", "Express.js REST APIs, routing, middleware, and error handling"),
+            ("flutter", "Flutter UI layouts, state management (provider, bloc), and native integration"),
+            ("mongodb", "MongoDB schemas, mongoose validation, indexing, and aggregations"),
+            ("postgres", "PostgreSQL database indexing, queries, raw SQL, and connection pools"),
+            ("rust", "Rust safe memory, lifetime patterns, error recovery, and concurrency"),
+            ("vite", "Vite build system, plugins, asset resolution, and hot reloading"),
+        ]
+    }
+
     pub fn get(name: &str) -> Option<String> {
         match name {
             "onpkg" => Some(include_str!("../SKILL.md").to_string()),
