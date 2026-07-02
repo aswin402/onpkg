@@ -43,8 +43,8 @@
   - [x] User-editable "Agent-Specific Notes" section
   - [x] Preserve existing user content on re-sync
 - [x] Call from `sync_onpkg_project()` after INDEX.md write
-- [ ] Add `--no-agents-md` flag to `Sync` command _(deferred to v0.2.0)_
-- [ ] Optionally symlink `CLAUDE.md → AGENTS.md` _(deferred to v0.2.0)_
+- [x] Add `--no-agents-md` flag to `Sync` command
+- [x] Optionally symlink `CLAUDE.md → AGENTS.md`
 - [x] Test: `onpkg sync` creates `AGENTS.md` at project root
 
 ### 1.3 Interactive Stack Selection

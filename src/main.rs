@@ -423,7 +423,7 @@ async fn main() -> Result<()> {
                                     Some(&format!("to project ({})", pkg_info.runtime)),
                                 );
                                 if let Err(e) =
-                                    templates::sync_onpkg_project(&project_dir, None, None, None)
+                                    templates::sync_onpkg_project(&project_dir, None, None, None, false, false)
                                 {
                                     TUI::warn(&format!(
                                         "Failed to auto-sync project manifest: {}",
@@ -890,7 +890,7 @@ content = """{{
             }
         }
 
-        Command::Sync { dir, watch } => {
+        Command::Sync { dir, watch, no_agents_md, symlink_claude } => {
             let target = if let Some(ref d) = dir {
                 std::path::PathBuf::from(d)
             } else {
@@ -902,7 +902,7 @@ content = """{{
             } else {
                 TUI::logo();
                 let sp = TUI::spinner("Syncing project manifest and workflow documentation...");
-                let res = templates::sync_onpkg_project(&target, None, None, None);
+                let res = templates::sync_onpkg_project(&target, None, None, None, no_agents_md, symlink_claude);
                 sp.finish_and_clear();
 
                 match res {

@@ -145,7 +145,9 @@ pub(crate) async fn handle_request(
                     "inputSchema": {
                         "type": "object",
                         "properties": {
-                            "dir": { "type": "string", "description": "Target project directory" }
+                            "dir": { "type": "string", "description": "Target project directory" },
+                            "no_agents_md": { "type": "boolean", "description": "Skip generating AGENTS.md workflow file" },
+                            "symlink_claude": { "type": "boolean", "description": "Create a symlink CLAUDE.md pointing to AGENTS.md if CLAUDE.md doesn't exist" }
                         }
                     }
                 },
@@ -359,7 +361,9 @@ async fn handle_tool_call(
         "sync" => {
             let dir_str = arguments.and_then(|a| a.get("dir")).and_then(|d| d.as_str());
             let target = dir_str.map(std::path::PathBuf::from).unwrap_or_else(|| std::env::current_dir().unwrap());
-            crate::templates::sync_onpkg_project(&target, None, None, None)?;
+            let no_agents_md = arguments.and_then(|a| a.get("no_agents_md")).and_then(|n| n.as_bool()).unwrap_or(false);
+            let symlink_claude = arguments.and_then(|a| a.get("symlink_claude")).and_then(|s| s.as_bool()).unwrap_or(false);
+            crate::templates::sync_onpkg_project(&target, None, None, None, no_agents_md, symlink_claude)?;
             Ok(serde_json::json!({
                 "content": [{ "type": "text", "text": "Sync completed successfully." }],
                 "isError": false

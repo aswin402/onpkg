@@ -24,7 +24,7 @@ pub fn watch_project(dir: &Path) -> Result<()> {
                 // Deadline reached! Run sync.
                 println!("Syncing project manifest...");
                 let path_to_sync = PathBuf::from(dir);
-                if let Err(e) = crate::templates::sync_onpkg_project(&path_to_sync, None, None, None) {
+                if let Err(e) = crate::templates::sync_onpkg_project(&path_to_sync, None, None, None, false, false) {
                     tracing::warn!("Auto-sync failed: {}", e);
                 } else {
                     println!("Sync complete.");

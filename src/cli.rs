@@ -71,6 +71,12 @@ pub enum Command {
         /// Live watch directory and automatically sync on changes
         #[arg(long, short)]
         watch: bool,
+        /// Skip generating AGENTS.md workflow file
+        #[arg(long)]
+        no_agents_md: bool,
+        /// Create a symlink CLAUDE.md pointing to AGENTS.md if CLAUDE.md doesn't exist
+        #[arg(long)]
+        symlink_claude: bool,
     },
 
     /// Stack commands — scaffold and install complete stacks online

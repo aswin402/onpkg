@@ -703,7 +703,7 @@ pub fn generate_onpkg_manifest(
     technologies: &[String],
     variables: Option<&std::collections::HashMap<String, String>>,
 ) -> Result<()> {
-    sync_onpkg_project(target_dir, Some(&tmpl.name), Some(technologies), variables)
+    sync_onpkg_project(target_dir, Some(&tmpl.name), Some(technologies), variables, false, false)
 }
 
 /// Scaffold stack template and execute all post-scaffold setups (hooks, docs, manifest generation)
@@ -834,12 +834,51 @@ pub fn generate_agents_md(
     Ok(())
 }
 
+fn create_claude_md_symlink(target_dir: &std::path::Path) -> Result<()> {
+    let agents_path = target_dir.join("AGENTS.md");
+    let claude_path = target_dir.join("CLAUDE.md");
+
+    if claude_path.exists() {
+        return Ok(());
+    }
+
+    #[cfg(unix)]
+    {
+        if let Err(e) = std::os::unix::fs::symlink("AGENTS.md", &claude_path) {
+            println!("  Warning: Failed to create CLAUDE.md symlink: {}. Copying instead...", e);
+            std::fs::copy(&agents_path, &claude_path)?;
+        } else {
+            println!("  created: CLAUDE.md symlink pointing to AGENTS.md");
+        }
+    }
+
+    #[cfg(windows)]
+    {
+        if let Err(e) = std::os::windows::fs::symlink_file("AGENTS.md", &claude_path) {
+            println!("  Warning: Failed to create CLAUDE.md symlink: {}. Copying instead...", e);
+            std::fs::copy(&agents_path, &claude_path)?;
+        } else {
+            println!("  created: CLAUDE.md symlink pointing to AGENTS.md");
+        }
+    }
+
+    #[cfg(not(any(unix, windows)))]
+    {
+        std::fs::copy(&agents_path, &claude_path)?;
+        println!("  created: CLAUDE.md copied from AGENTS.md");
+    }
+
+    Ok(())
+}
+
 /// Sync the project files and packages to onpkg.json and update/create workflow docs in onpkg_docs/
 pub fn sync_onpkg_project(
     target_dir: &std::path::Path,
     stack_name: Option<&str>,
     technologies: Option<&[String]>,
     variables: Option<&std::collections::HashMap<String, String>>,
+    no_agents_md: bool,
+    symlink_claude: bool,
 ) -> Result<()> {
     // 1. Detect project name
     let project_name = target_dir
@@ -1565,15 +1604,21 @@ Use these documents to manage project progress, feature requests, and design ali
             }
         }
     }
-    generate_agents_md(
-        target_dir,
-        &project_name_for_agents,
-        &runtime_for_agents,
-        &pm_for_agents,
-        &arch_for_agents,
-        &scripts_for_agents,
-        &active_skills,
-    )?;
+    if !no_agents_md {
+        generate_agents_md(
+            target_dir,
+            &project_name_for_agents,
+            &runtime_for_agents,
+            &pm_for_agents,
+            &arch_for_agents,
+            &scripts_for_agents,
+            &active_skills,
+        )?;
+
+        if symlink_claude {
+            create_claude_md_symlink(target_dir)?;
+        }
+    }
 
     Ok(())
 }
@@ -1843,5 +1888,36 @@ description = "Initialize git repository"
         assert_eq!(tmpl.hooks.len(), 1);
         assert_eq!(tmpl.hooks[0].command, "echo hello");
         assert_eq!(tmpl.hooks[0].description.as_deref(), Some("Say hello"));
+    }
+
+    #[test]
+    fn test_sync_project_with_no_agents_md_and_symlink_claude() {
+        let temp_dir = tempfile::tempdir().unwrap();
+        let project_dir = temp_dir.path().to_path_buf();
+
+        let onpkg_json = serde_json::json!({
+            "project": {
+                "name": "symlink-test",
+                "runtime": "rust",
+                "package_manager": "cargo"
+            }
+        });
+        std::fs::write(
+            project_dir.join("onpkg.json"),
+            serde_json::to_string(&onpkg_json).unwrap()
+        ).unwrap();
+
+        sync_onpkg_project(&project_dir, None, None, None, true, false).unwrap();
+        assert!(!project_dir.join("AGENTS.md").exists());
+
+        sync_onpkg_project(&project_dir, None, None, None, false, true).unwrap();
+        assert!(project_dir.join("AGENTS.md").exists());
+        let claude_path = project_dir.join("CLAUDE.md");
+        assert!(claude_path.exists());
+
+        let content = std::fs::read_to_string(&claude_path).unwrap();
+        let expected_name = project_dir.file_name().unwrap().to_str().unwrap();
+        assert!(content.contains(expected_name));
+        assert!(content.contains("npm"));
     }
 }
