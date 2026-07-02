@@ -10,7 +10,7 @@
 
 <p align="center">
   <a href="https://www.rust-lang.org/"><img src="https://img.shields.io/badge/Rust-1.80%2B-blue?logo=rust" alt="Rust"/></a>
-  <img src="https://img.shields.io/badge/version-0.1.2-green" alt="Version"/>
+  <img src="https://img.shields.io/badge/version-0.1.4-green" alt="Version"/>
   <img src="https://img.shields.io/badge/license-MIT-blue" alt="License"/>
 </p>
 

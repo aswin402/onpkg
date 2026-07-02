@@ -5,6 +5,17 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.1.4] - 2026-07-02
+
+### Added
+- **Template & Skill Registry Publishing (`onpkg template publish`, `onpkg skill publish`)**: Implemented REST API calls with token authorization, package validation, and semver version conflict checks before publishing to the registry.
+- **Fuzzy Skill Selector**: Added an interactive fuzzy-select mode when `onpkg skill install` is run with no arguments to pick from all built-in skills with descriptions.
+- **Selective Sync & Symlink Options**: Added `--no-agents-md` flag to skip `AGENTS.md` generation, and `--symlink-claude` flag to create a `CLAUDE.md` symlink pointing to `AGENTS.md` for Claude Code.
+
+### Changed
+- **In-process MCP Execution**: Refactored MCP tool call execution to run direct library API functions, avoiding subprocess spawning and improving efficiency.
+- **Thread-safe Test Isolation**: Introduced `home_override` and direct registry configuration overrides to prevent parallel unit/integration test database locking and environment variable collision.
+
 ## [0.1.3] - 2026-06-28
 
 ### Added
