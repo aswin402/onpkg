@@ -27,6 +27,7 @@ pub struct TemplateDefinition {
     pub description: String,
     pub version: String,
     pub files: Vec<TemplateFile>,
+    #[serde(default)]
     pub variables: Vec<TemplateVariable>,
     #[serde(default)]
     pub technologies: Vec<String>,

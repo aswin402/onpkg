@@ -231,12 +231,20 @@ async fn main() -> Result<()> {
             }
 
             TemplateSubcommand::Publish { name } => {
-                TUI::warn(&format!(
-                    "Publishing '{}' to the registry is coming in onpkg v0.3.0.",
-                    name
-                ));
-                TUI::info("For now, share templates via: onpkg template add <name> <git-url>");
-                TUI::info("Track progress: https://github.com/aswin402/onpkg/issues");
+                let sp = TUI::spinner(&format!("Publishing template '{}' to registry...", name));
+                let registry = crate::registry::Registry::new(config.clone());
+                let res = registry.publish_template(&name).await;
+                sp.finish_and_clear();
+
+                match res {
+                    Ok(_) => {
+                        TUI::success(&format!("Template '{}' published successfully!", name), None);
+                    }
+                    Err(e) => {
+                        TUI::error(&format!("Publish failed: {}", e));
+                        return Err(e);
+                    }
+                }
             }
         },
 
@@ -298,12 +306,20 @@ async fn main() -> Result<()> {
             }
 
             SkillSubcommand::Publish { name } => {
-                TUI::warn(&format!(
-                    "Publishing '{}' to the registry is coming in onpkg v0.3.0.",
-                    name
-                ));
-                TUI::info("For now, share skills via: onpkg skill add <name> <path-or-url>");
-                TUI::info("Track progress: https://github.com/aswin402/onpkg/issues");
+                let sp = TUI::spinner(&format!("Publishing skill '{}' to registry...", name));
+                let registry = crate::registry::Registry::new(config.clone());
+                let res = registry.publish_skill(&name).await;
+                sp.finish_and_clear();
+
+                match res {
+                    Ok(_) => {
+                        TUI::success(&format!("Skill '{}' published successfully!", name), None);
+                    }
+                    Err(e) => {
+                        TUI::error(&format!("Publish failed: {}", e));
+                        return Err(e);
+                    }
+                }
             }
         },
 

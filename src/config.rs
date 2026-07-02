@@ -9,11 +9,15 @@ pub struct Config {
     pub registry: RegistryConfig,
     pub cache: CacheConfig,
     pub network: NetworkConfig,
+    #[serde(skip)]
+    pub home_override: Option<PathBuf>,
 }
 
 #[derive(Serialize, Deserialize, Clone)]
 pub struct RegistryConfig {
     pub url: String,
+    #[serde(default)]
+    pub token: Option<String>,
 }
 
 #[derive(Serialize, Deserialize, Clone)]
@@ -34,6 +38,7 @@ impl Default for Config {
         Self {
             registry: RegistryConfig {
                 url: "https://registry.onpkg.dev".to_string(),
+                token: None,
             },
             cache: CacheConfig {
                 path: home.join(".onpkg/cache").to_string_lossy().to_string(),
@@ -43,6 +48,7 @@ impl Default for Config {
                 timeout_secs: 30,
                 retries: 3,
             },
+            home_override: None,
         }
     }
 }
@@ -77,6 +83,9 @@ impl Config {
     }
 
     pub fn cache_path(&self) -> PathBuf {
+        if let Some(ref h) = self.home_override {
+            return h.join(".onpkg/cache");
+        }
         if let Ok(override_dir) = env::var("ONPKG_CACHE_DIR") {
             return PathBuf::from(override_dir);
         }
@@ -88,12 +97,16 @@ impl Config {
     }
 
     pub fn templates_dir(&self) -> PathBuf {
-        let home = home_dir().unwrap_or_else(|| PathBuf::from("/tmp"));
+        let home = self.home_override.clone().unwrap_or_else(|| {
+            home_dir().unwrap_or_else(|| PathBuf::from("/tmp"))
+        });
         home.join(".onpkg/templates")
     }
 
     pub fn skills_dir(&self) -> PathBuf {
-        let home = home_dir().unwrap_or_else(|| PathBuf::from("/tmp"));
+        let home = self.home_override.clone().unwrap_or_else(|| {
+            home_dir().unwrap_or_else(|| PathBuf::from("/tmp"))
+        });
         home.join(".onpkg/skills")
     }
 

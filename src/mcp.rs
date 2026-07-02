@@ -551,6 +551,10 @@ mod tests {
 
     #[tokio::test]
     async fn test_mcp_initialize() {
+        let temp_dir = tempfile::tempdir().unwrap();
+        let mut config = crate::config::Config::default();
+        config.home_override = Some(temp_dir.path().to_path_buf());
+        
         let req = serde_json::json!({
             "jsonrpc": "2.0",
             "method": "initialize",
@@ -559,7 +563,6 @@ mod tests {
         });
         
         let req_struct: JsonRpcRequest = serde_json::from_value(req).unwrap();
-        let config = crate::config::Config::load().unwrap();
         let db = crate::db::Database::open(&config).unwrap();
         let registry = crate::registry::Registry::new(config.clone());
         let template_engine = crate::templates::TemplateEngine::new(config.clone());
@@ -578,6 +581,10 @@ mod tests {
 
     #[tokio::test]
     async fn test_mcp_tools_list() {
+        let temp_dir = tempfile::tempdir().unwrap();
+        let mut config = crate::config::Config::default();
+        config.home_override = Some(temp_dir.path().to_path_buf());
+        
         let req = serde_json::json!({
             "jsonrpc": "2.0",
             "method": "tools/list",
@@ -585,7 +592,6 @@ mod tests {
         });
         
         let req_struct: JsonRpcRequest = serde_json::from_value(req).unwrap();
-        let config = crate::config::Config::load().unwrap();
         let db = crate::db::Database::open(&config).unwrap();
         let registry = crate::registry::Registry::new(config.clone());
         let template_engine = crate::templates::TemplateEngine::new(config.clone());

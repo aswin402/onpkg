@@ -212,13 +212,13 @@
 - [x] Optional `--no-redact` flag to skip
 - [x] Test: Unit tests verifying OpenAI/GitHub/generic keys redaction
 
-### 3.6 Registry Publishing (v0.3.0) — DEFERRED
-- [ ] Design registry API contract (REST endpoints)
-- [ ] Implement `publish_template()` in `src/registry.rs`
-- [ ] Implement `publish_skill()` in `src/registry.rs`
-- [ ] Authentication (API key or GitHub OAuth)
-- [ ] Package validation before publish
-- [ ] Version conflict detection
+### 3.6 Registry Publishing (v0.3.0) — DONE
+- [x] Design registry API contract (REST endpoints)
+- [x] Implement `publish_template()` in `src/registry.rs`
+- [x] Implement `publish_skill()` in `src/registry.rs`
+- [x] Authentication (API key or GitHub OAuth)
+- [x] Package validation before publish
+- [x] Version conflict detection
 
 ---
 
