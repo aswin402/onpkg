@@ -227,7 +227,7 @@
 - [x] GitHub Actions workflow: build → test → release
 - [x] Cross-platform builds (Linux, macOS, Windows)
 - [x] Release asset naming convention for `self_update`
-- [ ] Changelog automation with `git-cliff`
+- [x] Changelog automation with `git-cliff`
 - [x] Add integration tests for new commands
 - [x] Add unit tests for mapper, packer, updater modules
 
