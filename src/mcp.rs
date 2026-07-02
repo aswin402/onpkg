@@ -5,28 +5,28 @@ use std::io::{self, BufRead, Write};
 
 #[derive(Deserialize, Debug)]
 #[allow(dead_code)]
-struct JsonRpcRequest {
-    jsonrpc: String,
-    method: String,
-    params: Option<Value>,
-    id: Option<Value>,
+pub(crate) struct JsonRpcRequest {
+    pub(crate) jsonrpc: String,
+    pub(crate) method: String,
+    pub(crate) params: Option<Value>,
+    pub(crate) id: Option<Value>,
 }
 
 #[derive(Serialize, Debug)]
-struct JsonRpcResponse {
-    jsonrpc: String,
+pub(crate) struct JsonRpcResponse {
+    pub(crate) jsonrpc: String,
     #[serde(skip_serializing_if = "Option::is_none")]
-    result: Option<Value>,
+    pub(crate) result: Option<Value>,
     #[serde(skip_serializing_if = "Option::is_none")]
-    error: Option<JsonRpcError>,
+    pub(crate) error: Option<JsonRpcError>,
     #[serde(skip_serializing_if = "Option::is_none")]
-    id: Option<Value>,
+    pub(crate) id: Option<Value>,
 }
 
 #[derive(Serialize, Debug)]
-struct JsonRpcError {
-    code: i64,
-    message: String,
+pub(crate) struct JsonRpcError {
+    pub(crate) code: i64,
+    pub(crate) message: String,
 }
 
 pub fn run_mcp_server() -> Result<()> {
@@ -65,7 +65,7 @@ pub fn run_mcp_server() -> Result<()> {
     Ok(())
 }
 
-fn handle_request(req: &JsonRpcRequest) -> JsonRpcResponse {
+pub(crate) fn handle_request(req: &JsonRpcRequest) -> JsonRpcResponse {
     let result = match req.method.as_str() {
         "initialize" => Some(serde_json::json!({
             "protocolVersion": "2024-11-05",
