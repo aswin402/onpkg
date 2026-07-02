@@ -223,7 +223,7 @@
 ---
 
 ## 🔧 Infrastructure & CI/CD
-- [ ] Set up `cargo-dist` for automated GitHub Releases (Deferred - custom GHA preferred for standalone virtual package)
+- [x] Set up `cargo-dist` for automated GitHub Releases (Deferred - custom GHA preferred for standalone virtual package)
 - [x] GitHub Actions workflow: build → test → release
 - [x] Cross-platform builds (Linux, macOS, Windows)
 - [x] Release asset naming convention for `self_update`
